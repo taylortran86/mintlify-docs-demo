@@ -30,40 +30,7 @@ You can retrieve detailed information about a specific API key, including when i
 
 ## Revoking API Keys
 
-Delete keys that are no longer needed or may be compromised:
-
-<CodeGroup>
-```bash cURL
-curl -X DELETE "http://localhost:8000/public/v1/api-keys/key_abc123" \
-  -H "Authorization: Bearer YOUR_API_KEY"
-```
-
-```python Python
-import requests
-
-response = requests.delete(
-    "http://localhost:8000/public/v1/api-keys/key_abc123",
-    headers={"Authorization": f"Bearer {YOUR_API_KEY}"}
-)
-
-if response.status_code == 204:
-    print("✅ API key revoked successfully")
-```
-
-```javascript JavaScript
-const response = await fetch(
-  "http://localhost:8000/public/v1/api-keys/key_abc123",
-  {
-    method: "DELETE",
-    headers: { "Authorization": `Bearer ${YOUR_API_KEY}` }
-  }
-);
-
-if (response.status_code === 204) {
-  console.log("✅ API key revoked successfully");
-}
-```
-</CodeGroup>
+You can revoke API keys that are no longer needed or may be compromised. Revocation is immediate and irreversible—any applications using that key will lose access instantly.
 
 <Warning>
   Revoking a key is immediate and irreversible. Any applications using that key will lose access instantly.
