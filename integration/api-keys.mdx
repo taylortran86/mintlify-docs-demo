@@ -10,102 +10,10 @@ API keys are the primary method for authenticating requests to the Mintie Calend
 
 ## Creating API Keys
 
-### Create Your First Key
-
-<CodeGroup>
-```bash cURL
-curl -X POST "http://localhost:8000/public/v1/api-keys" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Production API Key",
-    "scopes": ["read", "write"],
-    "expires_at": "2026-12-31T23:59:59"
-  }'
-```
-
-```python Python
-import requests
-from datetime import datetime, timedelta
-
-# Create a key that expires in 1 year
-expires = datetime.now() + timedelta(days=365)
-
-key_data = {
-    "name": "Production API Key",
-    "scopes": ["read", "write"],
-    "expires_at": expires.isoformat()
-}
-
-response = requests.post(
-    "http://localhost:8000/public/v1/api-keys",
-    json=key_data
-)
-
-api_key = response.json()
-print(f"New API Key: {api_key['key']}")
-print("⚠️  Save this key - you won't see it again!")
-```
-
-```javascript JavaScript
-const expiresAt = new Date();
-expiresAt.setFullYear(expiresAt.getFullYear() + 1);
-
-const keyData = {
-  name: "Production API Key",
-  scopes: ["read", "write"],
-  expires_at: expiresAt.toISOString()
-};
-
-const response = await fetch("http://localhost:8000/public/v1/api-keys", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(keyData)
-});
-
-const apiKey = await response.json();
-console.log(`New API Key: ${apiKey.key}`);
-console.log("⚠️  Save this key - you won't see it again!");
-```
-</CodeGroup>
-
-### Request Parameters
-
-<ParamField path="name" type="string" required>
-  A descriptive name for the API key (1-100 characters)
-
-  **Examples**: "Production Server", "Mobile App", "Analytics Dashboard"
-</ParamField>
-
-<ParamField path="scopes" type="array" required>
-  List of permission scopes for the key
-
-  **Options**: `["read"]`, `["write"]`, `["admin"]`, `["read", "write"]`
-</ParamField>
-
-<ParamField path="expires_at" type="datetime">
-  Optional expiration date in ISO 8601 format
-
-  **Default**: No expiration (key is valid indefinitely)
-</ParamField>
-
-### Response
-
-```json
-{
-  "id": "key_abc123",
-  "name": "Production API Key",
-  "key": "sk_NrT8QJKvHx7wGzE3V9pYhL2cDm5XfU1bS6aR4oI9n0qA",
-  "prefix": "sk_NrT8...I9n0qA",
-  "scopes": ["read", "write"],
-  "created_at": "2025-11-14T10:00:00",
-  "expires_at": "2026-12-31T23:59:59",
-  "last_used_at": null,
-  "is_active": true
-}
-```
+You can create API keys through the API by providing a descriptive name, permission scopes, and an optional expiration date. When you create a key, you'll receive the full API key value only once—make sure to store it securely immediately.
 
 <Warning>
-  The `key` field is only returned once during creation. Store it in a secure location immediately!
+  API keys are only shown once during creation. Store them in a secure location immediately!
 </Warning>
 
 ## Listing API Keys
