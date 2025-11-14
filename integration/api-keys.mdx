@@ -104,25 +104,7 @@ You can revoke API keys that are no longer needed or may be compromised. Revocat
   </Accordion>
 
   <Accordion title="Monitor Key Usage">
-    Regularly check `last_used_at` timestamps:
-
-    ```python
-    import requests
-    from datetime import datetime, timedelta
-
-    response = requests.get(
-        "http://localhost:8000/public/v1/api-keys",
-        headers={"Authorization": f"Bearer {YOUR_API_KEY}"}
-    )
-
-    keys = response.json()["keys"]
-    thirty_days_ago = datetime.now() - timedelta(days=30)
-
-    for key in keys:
-        last_used = key.get("last_used_at")
-        if not last_used or datetime.fromisoformat(last_used) < thirty_days_ago:
-            print(f"⚠️  Unused key: {key['name']} (ID: {key['id']})")
-    ```
+    Regularly check `last_used_at` timestamps to identify unused or stale keys. Consider revoking keys that haven't been used in 30+ days.
   </Accordion>
 
   <Accordion title="Revoke Compromised Keys Immediately">
