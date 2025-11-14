@@ -85,20 +85,7 @@ You can revoke API keys that are no longer needed or may be compromised. Revocat
   </Accordion>
 
   <Accordion title="Set Expiration Dates">
-    Use expiration dates for temporary or short-term keys:
-
-    ```python
-    from datetime import datetime, timedelta
-
-    # Key for a 3-month project
-    expires = datetime.now() + timedelta(days=90)
-
-    key_data = {
-        "name": "Q4 Campaign Integration",
-        "scopes": ["read", "write"],
-        "expires_at": expires.isoformat()
-    }
-    ```
+    Use expiration dates for temporary or short-term keys. For example, set a 90-day expiration for project-specific keys or 24-hour expiration for demo access.
   </Accordion>
 
   <Accordion title="Rotate Keys Regularly">
