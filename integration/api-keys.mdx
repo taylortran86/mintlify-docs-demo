@@ -26,18 +26,7 @@ You can view all API keys for your account, including their names, prefixes, sco
 
 ## Getting Key Details
 
-Retrieve information about a specific API key:
-
-```bash
-curl "http://localhost:8000/public/v1/api-keys/key_abc123" \
-  -H "Authorization: Bearer YOUR_API_KEY"
-```
-
-Useful for checking:
-- When the key was last used
-- Current expiration status
-- Assigned scopes
-- Creation date
+You can retrieve detailed information about a specific API key, including when it was last used, its current expiration status, assigned scopes, and creation date. This is useful for monitoring key usage and ensuring proper access control.
 
 ## Revoking API Keys
 
