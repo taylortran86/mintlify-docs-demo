@@ -68,51 +68,10 @@ You can revoke API keys that are no longer needed or may be compromised. Revocat
 
 ### Choosing the Right Scopes
 
-<Tabs>
-  <Tab title="Analytics Dashboard">
-    ```json
-    {
-      "name": "Analytics Dashboard",
-      "scopes": ["read"]
-    }
-    ```
-
-    Read-only access for viewing metrics and usage data.
-  </Tab>
-
-  <Tab title="Webhook Integration">
-    ```json
-    {
-      "name": "Webhook Manager",
-      "scopes": ["read", "write"]
-    }
-    ```
-
-    Ability to create and manage webhook subscriptions.
-  </Tab>
-
-  <Tab title="Admin Tool">
-    ```json
-    {
-      "name": "Admin Dashboard",
-      "scopes": ["read", "write", "admin"]
-    }
-    ```
-
-    Full access for administrative operations including key management.
-  </Tab>
-
-  <Tab title="CI/CD Pipeline">
-    ```json
-    {
-      "name": "GitHub Actions",
-      "scopes": ["write"]
-    }
-    ```
-
-    Write access for automated deployments without admin privileges.
-  </Tab>
-</Tabs>
+- **Analytics Dashboard**: Use `read` scope for read-only access to view metrics and usage data
+- **Webhook Integration**: Use `read` and `write` scopes to create and manage webhook subscriptions
+- **Admin Tool**: Use `read`, `write`, and `admin` scopes for full access including key management
+- **CI/CD Pipeline**: Use `write` scope for automated deployments without admin privileges
 
 ## Best Practices
 
