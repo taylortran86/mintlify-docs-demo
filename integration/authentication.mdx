@@ -447,6 +447,33 @@ fi
 ```
 </CodeGroup>
 
+## Account Information
+
+Once authenticated, you can retrieve your account details and subscription information:
+
+```bash
+curl "http://localhost:8000/v1/account" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+**Response:**
+
+```json
+{
+  "account_id": "demo_account",
+  "email": "demo@example.com",
+  "plan": "Professional",
+  "created_at": "2025-08-15T10:00:00Z",
+  "api_quota": 100000,
+  "api_usage": 1523
+}
+```
+
+This endpoint is useful for:
+- Verifying your authentication is working
+- Checking your current API quota and usage
+- Displaying account information in your application
+
 ## Next Steps
 
 <CardGroup cols={2}>
