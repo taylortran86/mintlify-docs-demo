@@ -146,59 +146,15 @@ You can revoke API keys that are no longer needed or may be compromised. Revocat
 
 ### Environment-Based Keys
 
-```python
-import os
-
-ENVIRONMENT = os.environ.get("ENV", "development")
-
-# Different keys for different environments
-API_KEYS = {
-    "development": os.environ.get("MINTIE_API_KEY_DEV"),
-    "staging": os.environ.get("MINTIE_API_KEY_STAGING"),
-    "production": os.environ.get("MINTIE_API_KEY_PROD")
-}
-
-API_KEY = API_KEYS[ENVIRONMENT]
-```
+Use different API keys for development, staging, and production environments. Store them as environment variables and load them based on your current environment.
 
 ### Service-Specific Keys
 
-```python
-# Create dedicated keys for each service
-services = [
-    {"name": "Mobile App", "scopes": ["read", "write"]},
-    {"name": "Web Dashboard", "scopes": ["read", "write"]},
-    {"name": "Analytics Engine", "scopes": ["read"]},
-    {"name": "Admin Panel", "scopes": ["read", "write", "admin"]}
-]
-
-for service in services:
-    response = requests.post(
-        "http://localhost:8000/public/v1/api-keys",
-        json=service
-    )
-    print(f"Created key for {service['name']}")
-```
+Create dedicated keys for each service or application (mobile app, web dashboard, analytics engine, admin panel) with appropriate scopes for each use case.
 
 ### Temporary Access Keys
 
-```python
-from datetime import datetime, timedelta
-
-# Create a key that expires in 24 hours
-expires = datetime.now() + timedelta(hours=24)
-
-temp_key = {
-    "name": "Demo Access - Expires 24h",
-    "scopes": ["read"],
-    "expires_at": expires.isoformat()
-}
-
-response = requests.post(
-    "http://localhost:8000/public/v1/api-keys",
-    json=temp_key
-)
-```
+For demos or short-term access, create keys with expiration dates (e.g., 24 hours for demo access, 90 days for project-specific integrations).
 
 ## Troubleshooting
 
