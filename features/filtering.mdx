@@ -1,0 +1,544 @@
+---
+title: "Filtering & Search"
+description: "Filter tasks and events to find what you need quickly"
+icon: "filter"
+---
+
+## Overview
+
+Mintie Calendar provides powerful filtering capabilities to help you focus on the tasks and events that matter most. Whether you're looking for completed tasks, upcoming events, or items within a specific date range, filtering makes it easy to find exactly what you need.
+
+## Task Filtering
+
+### Filter by Completion Status
+
+The most common way to filter tasks is by their completion status:
+
+<Tabs>
+  <Tab title="All Tasks">
+    View every task regardless of completion status:
+
+    ```bash
+    curl http://localhost:8000/api/tasks
+    ```
+
+    **Use case**: Get a complete overview of all work items
+  </Tab>
+
+  <Tab title="Active Tasks">
+    Show only incomplete tasks:
+
+    ```bash
+    curl "http://localhost:8000/api/tasks?completed=false"
+    ```
+
+    **Use case**: Focus on pending work that needs attention
+  </Tab>
+
+  <Tab title="Completed Tasks">
+    Show only finished tasks:
+
+    ```bash
+    curl "http://localhost:8000/api/tasks?completed=true"
+    ```
+
+    **Use case**: Review accomplishments or verify task completion
+  </Tab>
+</Tabs>
+
+### Web Interface Filters
+
+The web application provides quick-access filter buttons:
+
+<Steps>
+  <Step title="Locate Filter Buttons">
+    Find the filter buttons above the task list: **All**, **Active**, and **Completed**.
+  </Step>
+
+  <Step title="Click a Filter">
+    Click any button to instantly update the task list. No page refresh needed!
+  </Step>
+
+  <Step title="Active Filter Indicator">
+    The selected filter is highlighted, showing which view you're currently using.
+  </Step>
+</Steps>
+
+<Info>
+  Filters update the UI in real-time without making a new API request. Tasks are filtered client-side for instant response.
+</Info>
+
+## Event Filtering
+
+### Filter by Date Range
+
+Events support filtering by date range, allowing you to view events for specific time periods:
+
+<Tabs>
+  <Tab title="Today's Events">
+    ```bash
+    START=$(date +"%Y-%m-%dT00:00:00")
+    END=$(date +"%Y-%m-%dT23:59:59")
+
+    curl "http://localhost:8000/api/events?start_date=$START&end_date=$END"
+    ```
+  </Tab>
+
+  <Tab title="This Week">
+    ```bash
+    # Monday through Sunday
+    curl "http://localhost:8000/api/events?start_date=2025-11-11T00:00:00&end_date=2025-11-17T23:59:59"
+    ```
+  </Tab>
+
+  <Tab title="This Month">
+    ```bash
+    curl "http://localhost:8000/api/events?start_date=2025-11-01T00:00:00&end_date=2025-11-30T23:59:59"
+    ```
+  </Tab>
+
+  <Tab title="Next 7 Days">
+    ```python
+    import requests
+    from datetime import datetime, timedelta
+
+    start = datetime.now()
+    end = start + timedelta(days=7)
+
+    params = {
+        "start_date": start.isoformat(),
+        "end_date": end.isoformat()
+    }
+
+    response = requests.get(
+        "http://localhost:8000/api/events",
+        params=params
+    )
+
+    events = response.json()
+    ```
+  </Tab>
+</Tabs>
+
+### Date Range Parameters
+
+<ParamField query="start_date" type="datetime">
+  **Optional.** Return events starting on or after this datetime (ISO 8601 format).
+</ParamField>
+
+<ParamField query="end_date" type="datetime">
+  **Optional.** Return events starting on or before this datetime (ISO 8601 format).
+</ParamField>
+
+<Note>
+  - If only `start_date` is provided, all events from that date forward are returned
+  - If only `end_date` is provided, all events up to that date are returned
+  - If neither is provided, all events are returned
+  - Filtering compares against the event's `start_time`
+</Note>
+
+## Advanced Filtering Techniques
+
+### Combining Filters
+
+While the API doesn't directly support multiple filter combinations, you can chain filters programmatically:
+
+```python
+import requests
+
+# Get all tasks
+response = requests.get("http://localhost:8000/api/tasks")
+all_tasks = response.json()
+
+# Filter client-side for tasks with due dates this week
+from datetime import datetime, timedelta
+
+week_start = datetime.now()
+week_end = week_start + timedelta(days=7)
+
+tasks_due_this_week = [
+    task for task in all_tasks
+    if task.get("due_date") and
+       week_start <= datetime.fromisoformat(task["due_date"]) <= week_end
+]
+```
+
+### Filtering by Multiple Criteria
+
+Create custom filters for complex queries:
+
+<CodeGroup>
+```python Python
+import requests
+from datetime import datetime, timedelta
+
+# Get active tasks due within 3 days
+response = requests.get(
+    "http://localhost:8000/api/tasks",
+    params={"completed": False}
+)
+
+tasks = response.json()
+three_days = datetime.now() + timedelta(days=3)
+
+urgent_tasks = [
+    task for task in tasks
+    if task.get("due_date") and
+       datetime.fromisoformat(task["due_date"]) <= three_days
+]
+
+print(f"Found {len(urgent_tasks)} urgent tasks")
+```
+
+```javascript JavaScript
+// Get events happening in the next hour
+const response = await fetch("http://localhost:8000/api/events");
+const events = await response.json();
+
+const now = new Date();
+const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
+
+const upcomingEvents = events.filter(event => {
+  const startTime = new Date(event.start_time);
+  return startTime >= now && startTime <= oneHourLater;
+});
+
+console.log(`${upcomingEvents.length} events starting soon`);
+```
+</CodeGroup>
+
+## Sorting Results
+
+### Task Sorting
+
+Tasks are returned in the order they were created (oldest first). For custom sorting:
+
+```python
+import requests
+
+response = requests.get("http://localhost:8000/api/tasks")
+tasks = response.json()
+
+# Sort by due date (soonest first)
+sorted_by_due = sorted(
+    tasks,
+    key=lambda t: t.get("due_date") or "9999-12-31",
+)
+
+# Sort by title alphabetically
+sorted_by_title = sorted(tasks, key=lambda t: t["title"].lower())
+
+# Sort by creation date (newest first)
+sorted_by_created = sorted(
+    tasks,
+    key=lambda t: t["created_at"],
+    reverse=True
+)
+```
+
+### Event Sorting
+
+Events are automatically sorted by `start_time` in ascending order (earliest first):
+
+```bash
+curl http://localhost:8000/api/events
+# Returns events in chronological order
+```
+
+For reverse chronological order (latest first):
+
+```python
+import requests
+
+response = requests.get("http://localhost:8000/api/events")
+events = response.json()
+
+# Reverse the order
+events.reverse()
+
+# Now events go from latest to earliest
+```
+
+## Search and Text Filtering
+
+While Mintie Calendar doesn't have built-in text search, you can implement client-side search:
+
+<CodeGroup>
+```python Python
+import requests
+
+def search_tasks(query):
+    """Search tasks by title or description"""
+    response = requests.get("http://localhost:8000/api/tasks")
+    tasks = response.json()
+
+    query_lower = query.lower()
+
+    return [
+        task for task in tasks
+        if query_lower in task["title"].lower() or
+           query_lower in (task.get("description") or "").lower()
+    ]
+
+# Search for tasks containing "API"
+results = search_tasks("API")
+print(f"Found {len(results)} tasks matching 'API'")
+```
+
+```javascript JavaScript
+async function searchEvents(query) {
+  const response = await fetch("http://localhost:8000/api/events");
+  const events = await response.json();
+
+  const queryLower = query.toLowerCase();
+
+  return events.filter(event =>
+    event.title.toLowerCase().includes(queryLower) ||
+    (event.description || "").toLowerCase().includes(queryLower)
+  );
+}
+
+// Search for events about "meeting"
+const meetings = await searchEvents("meeting");
+console.log(`Found ${meetings.length} events about meetings`);
+```
+</CodeGroup>
+
+## Performance Considerations
+
+<AccordionGroup>
+  <Accordion title="Filter Server-Side When Possible">
+    Use API query parameters (`completed`, `start_date`, `end_date`) to reduce data transfer:
+
+    ```bash
+    # Good: Filter on server
+    curl "http://localhost:8000/api/tasks?completed=false"
+
+    # Less efficient: Download all then filter client-side
+    curl "http://localhost:8000/api/tasks" # then filter locally
+    ```
+  </Accordion>
+
+  <Accordion title="Cache Results">
+    If you're making frequent queries, cache the results to reduce API calls:
+
+    ```python
+    import requests
+    from functools import lru_cache
+    from datetime import datetime
+
+    @lru_cache(maxsize=128)
+    def get_tasks_cached(completed=None, timestamp=None):
+        """Cached task fetcher with timestamp for cache invalidation"""
+        params = {}
+        if completed is not None:
+            params["completed"] = completed
+
+        response = requests.get(
+            "http://localhost:8000/api/tasks",
+            params=params
+        )
+        return response.json()
+
+    # Cache for current minute
+    current_minute = datetime.now().strftime("%Y-%m-%d-%H-%M")
+    tasks = get_tasks_cached(completed=False, timestamp=current_minute)
+    ```
+  </Accordion>
+
+  <Accordion title="Paginate Large Result Sets">
+    For applications with many tasks/events, implement pagination client-side:
+
+    ```python
+    def paginate(items, page=1, per_page=20):
+        """Simple pagination"""
+        start = (page - 1) * per_page
+        end = start + per_page
+        return {
+            "items": items[start:end],
+            "total": len(items),
+            "page": page,
+            "per_page": per_page,
+            "total_pages": (len(items) + per_page - 1) // per_page
+        }
+
+    tasks = get_all_tasks()
+    page_1 = paginate(tasks, page=1, per_page=20)
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Filter Examples
+
+### Common Filter Patterns
+
+<Tabs>
+  <Tab title="Overdue Tasks">
+    ```python
+    import requests
+    from datetime import datetime
+
+    response = requests.get(
+        "http://localhost:8000/api/tasks",
+        params={"completed": False}
+    )
+
+    tasks = response.json()
+    now = datetime.now()
+
+    overdue = [
+        task for task in tasks
+        if task.get("due_date") and
+           datetime.fromisoformat(task["due_date"]) < now
+    ]
+
+    for task in overdue:
+        print(f"⚠️ OVERDUE: {task['title']}")
+    ```
+  </Tab>
+
+  <Tab title="Today's Schedule">
+    ```python
+    import requests
+    from datetime import datetime
+
+    today = datetime.now().date()
+    start = datetime.combine(today, datetime.min.time())
+    end = datetime.combine(today, datetime.max.time())
+
+    response = requests.get(
+        "http://localhost:8000/api/events",
+        params={
+            "start_date": start.isoformat(),
+            "end_date": end.isoformat()
+        }
+    )
+
+    print(f"Today's schedule ({len(response.json())} events):")
+    for event in response.json():
+        print(f"  {event['start_time']}: {event['title']}")
+    ```
+  </Tab>
+
+  <Tab title="Completed This Week">
+    ```python
+    import requests
+    from datetime import datetime, timedelta
+
+    # Get all completed tasks
+    response = requests.get(
+        "http://localhost:8000/api/tasks",
+        params={"completed": True}
+    )
+
+    tasks = response.json()
+
+    # Filter for those created this week
+    week_ago = datetime.now() - timedelta(days=7)
+    this_week = [
+        task for task in tasks
+        if datetime.fromisoformat(task["created_at"]) >= week_ago
+    ]
+
+    print(f"Completed {len(this_week)} tasks this week!")
+    ```
+  </Tab>
+
+  <Tab title="Upcoming Events">
+    ```javascript
+    // Get events in the next 30 minutes
+    const response = await fetch("http://localhost:8000/api/events");
+    const events = await response.json();
+
+    const now = new Date();
+    const soon = new Date(now.getTime() + 30 * 60 * 1000);
+
+    const upcoming = events.filter(event => {
+      const start = new Date(event.start_time);
+      return start >= now && start <= soon;
+    });
+
+    if (upcoming.length > 0) {
+      console.log("⏰ Events starting soon:");
+      upcoming.forEach(e => console.log(`  - ${e.title}`));
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Use Appropriate Filter Level">
+    - **Server-side**: Use API parameters for large datasets
+    - **Client-side**: Filter locally for additional criteria
+    - **Hybrid**: Fetch filtered data from API, then apply secondary filters
+  </Accordion>
+
+  <Accordion title="Handle Empty Results">
+    Always check for empty result sets and provide meaningful feedback:
+
+    ```python
+    tasks = get_filtered_tasks(completed=False)
+
+    if not tasks:
+        print("🎉 No active tasks! You're all caught up!")
+    else:
+        print(f"📋 You have {len(tasks)} active tasks")
+    ```
+  </Accordion>
+
+  <Accordion title="Validate Date Ranges">
+    Ensure start dates come before end dates:
+
+    ```python
+    if start_date >= end_date:
+        raise ValueError("start_date must be before end_date")
+    ```
+  </Accordion>
+
+  <Accordion title="Consider Time Zones">
+    Be consistent with time zone handling when filtering by dates:
+
+    ```python
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+
+    # Always use timezone-aware datetimes
+    now = datetime.now(ZoneInfo("America/New_York"))
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Related Features
+
+<CardGroup cols={2}>
+  <Card
+    title="Task Management"
+    icon="list-check"
+    href="/features/tasks"
+  >
+    Learn about task creation and completion
+  </Card>
+  <Card
+    title="Calendar Events"
+    icon="calendar"
+    href="/features/events"
+  >
+    Understand event scheduling and management
+  </Card>
+  <Card
+    title="Analytics"
+    icon="chart-line"
+    href="/integration/analytics"
+  >
+    View usage statistics and metrics
+  </Card>
+  <Card
+    title="API Reference"
+    icon="code"
+    href="/api-reference"
+  >
+    Explore all API endpoints and parameters
+  </Card>
+</CardGroup>

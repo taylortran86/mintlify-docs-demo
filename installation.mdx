@@ -1,0 +1,442 @@
+---
+title: "Installation"
+description: "Complete installation guide for Mintie Calendar with troubleshooting tips"
+icon: "download"
+---
+
+## System Requirements
+
+Before installing Mintie Calendar, ensure your system meets these requirements:
+
+<CardGroup cols={2}>
+  <Card title="Python" icon="python">
+    Version 3.8 or higher
+  </Card>
+  <Card title="Package Manager" icon="box">
+    Poetry (recommended) or pip
+  </Card>
+  <Card title="Operating System" icon="computer">
+    macOS, Linux, or Windows
+  </Card>
+  <Card title="Database" icon="database">
+    SQLite (included, no setup needed)
+  </Card>
+</CardGroup>
+
+## Installation Methods
+
+Choose the installation method that best suits your workflow.
+
+<Tabs>
+  <Tab title="Poetry (Recommended)">
+    ### Why Poetry?
+
+    Poetry provides superior dependency management, automatic virtual environment handling, and consistent development environments.
+
+    ### Install Poetry
+
+    If you don't have Poetry installed:
+
+    ```bash
+    # macOS/Linux
+    curl -sSL https://install.python-poetry.org | python3 -
+
+    # Windows (PowerShell)
+    (Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | py -
+    ```
+
+    Verify installation:
+    ```bash
+    poetry --version
+    ```
+
+    ### Install Mintie Calendar
+
+    <Steps>
+      <Step title="Navigate to Project">
+        ```bash
+        cd mintlify-project-demo
+        ```
+      </Step>
+
+      <Step title="Install Dependencies">
+        ```bash
+        poetry install
+        ```
+
+        This command will:
+        - Create a virtual environment automatically
+        - Install all dependencies from `pyproject.toml`
+        - Set up development tools (Black, Ruff, pytest)
+      </Step>
+
+      <Step title="Verify Installation">
+        ```bash
+        poetry run python -c "import fastapi; print('FastAPI version:', fastapi.__version__)"
+        ```
+      </Step>
+    </Steps>
+
+    ### Running Commands with Poetry
+
+    Prefix all commands with `poetry run`:
+
+    ```bash
+    # Start server
+    poetry run uvicorn backend.main:app --reload
+
+    # Export OpenAPI schema
+    poetry run export-schema
+
+    # Format code
+    poetry run black backend/
+
+    # Run tests
+    poetry run pytest
+    ```
+
+    ### Optional: Activate Virtual Environment
+
+    If you prefer working inside an activated environment:
+
+    ```bash
+    # Find environment path
+    poetry env info --path
+
+    # Activate (macOS/Linux)
+    source $(poetry env info --path)/bin/activate
+
+    # Activate (Windows)
+    & "$(poetry env info --path)\Scripts\activate.ps1"
+    ```
+  </Tab>
+
+  <Tab title="pip">
+    ### Install with pip
+
+    Traditional Python package management using pip and virtual environments.
+
+    <Steps>
+      <Step title="Navigate to Project">
+        ```bash
+        cd mintlify-project-demo
+        ```
+      </Step>
+
+      <Step title="Create Virtual Environment">
+        ```bash
+        python -m venv venv
+        ```
+      </Step>
+
+      <Step title="Activate Virtual Environment">
+        <Tabs>
+          <Tab title="macOS/Linux">
+            ```bash
+            source venv/bin/activate
+            ```
+          </Tab>
+          <Tab title="Windows (Command Prompt)">
+            ```cmd
+            venv\Scripts\activate
+            ```
+          </Tab>
+          <Tab title="Windows (PowerShell)">
+            ```powershell
+            venv\Scripts\Activate.ps1
+            ```
+          </Tab>
+        </Tabs>
+
+        Your prompt should now show `(venv)` indicating the environment is active.
+      </Step>
+
+      <Step title="Install Dependencies">
+        ```bash
+        pip install -r requirements.txt
+        ```
+      </Step>
+
+      <Step title="Verify Installation">
+        ```bash
+        python -c "import fastapi; print('FastAPI version:', fastapi.__version__)"
+        ```
+      </Step>
+    </Steps>
+
+    ### Running Commands with pip
+
+    With the virtual environment activated:
+
+    ```bash
+    # Start server
+    python -m uvicorn backend.main:app --reload
+
+    # Export OpenAPI schema
+    python export_openapi.py
+
+    # Run tests
+    pytest
+    ```
+  </Tab>
+</Tabs>
+
+## Starting the Server
+
+Once installed, start the FastAPI development server:
+
+<CodeGroup>
+```bash Poetry
+poetry run uvicorn backend.main:app --reload
+```
+
+```bash pip
+python -m uvicorn backend.main:app --reload
+```
+</CodeGroup>
+
+### Server Output
+
+You should see output similar to:
+
+```
+INFO:     Will watch for changes in these directories: ['/path/to/mintlify-project-demo']
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [12345] using StatReload
+INFO:     Started server process [12346]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+```
+
+### What the `--reload` Flag Does
+
+The `--reload` flag enables auto-reload during development:
+- Watches for file changes in your project
+- Automatically restarts the server when you save changes
+- Essential for development, but disable in production
+
+## Accessing the Application
+
+Once the server is running, access different parts of the application:
+
+<CardGroup cols={2}>
+  <Card title="Web Application" icon="browser" href="http://localhost:8000/static/index.html">
+    Main user interface for tasks and events
+  </Card>
+  <Card title="Public API Docs" icon="book-open" href="http://localhost:8000/public/docs">
+    Interactive Swagger UI for the public API
+  </Card>
+  <Card title="Internal API Docs" icon="code" href="http://localhost:8000/internal/docs">
+    Documentation for internal application routes
+  </Card>
+  <Card title="API Health Check" icon="heart-pulse" href="http://localhost:8000/public/v1/health">
+    Verify the API is responding
+  </Card>
+</CardGroup>
+
+## Database Setup
+
+Mintie Calendar uses SQLite, which requires no additional configuration.
+
+### Automatic Database Creation
+
+On first run, the application automatically creates `calendar_todo.db` in the project root:
+
+```
+mintlify-project-demo/
+├── calendar_todo.db    ← Created automatically
+├── backend/
+├── frontend/
+└── ...
+```
+
+### Database Schema
+
+The database includes a single `items` table:
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | INTEGER | Primary key |
+| `title` | VARCHAR(200) | Task/event title |
+| `description` | TEXT | Optional description |
+| `item_type` | ENUM | Either "task" or "event" |
+| `completed` | BOOLEAN | Task completion status |
+| `due_date` | DATETIME | Optional task due date |
+| `start_time` | DATETIME | Event start time |
+| `end_time` | DATETIME | Event end time |
+| `created_at` | DATETIME | Timestamp of creation |
+
+### Resetting the Database
+
+To start fresh, simply delete the database file:
+
+```bash
+rm calendar_todo.db
+```
+
+The application will recreate it on next startup.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Port 8000 already in use">
+    If another application is using port 8000:
+
+    ```bash
+    # Use a different port
+    poetry run uvicorn backend.main:app --reload --port 8001
+    ```
+
+    Or find and stop the process using port 8000:
+
+    ```bash
+    # macOS/Linux
+    lsof -ti:8000 | xargs kill -9
+
+    # Windows
+    netstat -ano | findstr :8000
+    taskkill /PID <PID> /F
+    ```
+  </Accordion>
+
+  <Accordion title="Module not found errors">
+    If you see `ModuleNotFoundError`:
+
+    **With Poetry:**
+    ```bash
+    poetry install --no-root
+    poetry update
+    ```
+
+    **With pip:**
+    ```bash
+    pip install --upgrade pip
+    pip install -r requirements.txt --force-reinstall
+    ```
+  </Accordion>
+
+  <Accordion title="Poetry not found after installation">
+    Add Poetry to your PATH:
+
+    ```bash
+    # macOS/Linux - add to ~/.zshrc or ~/.bashrc
+    export PATH="$HOME/.local/bin:$PATH"
+
+    # Windows - add to environment variables
+    %APPDATA%\Python\Scripts
+    ```
+
+    Restart your terminal and verify:
+    ```bash
+    poetry --version
+    ```
+  </Accordion>
+
+  <Accordion title="Permission denied on macOS/Linux">
+    You may need to make the activate script executable:
+
+    ```bash
+    chmod +x venv/bin/activate
+    source venv/bin/activate
+    ```
+  </Accordion>
+
+  <Accordion title="CORS errors in browser">
+    CORS is already configured for `http://localhost:8000`. If accessing from a different origin, update `backend/main.py`:
+
+    ```python
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["http://localhost:8000", "http://your-domain.com"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    ```
+  </Accordion>
+
+  <Accordion title="Database locked error">
+    SQLite databases can lock when accessed by multiple processes:
+
+    - Ensure only one server instance is running
+    - Close any database browser tools
+    - Restart the server
+
+    If the error persists:
+    ```bash
+    rm calendar_todo.db
+    # Server will recreate on next start
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Development Tools
+
+Mintie Calendar includes several development tools when using Poetry.
+
+### Code Formatting with Black
+
+Format Python code to maintain consistency:
+
+```bash
+poetry run black backend/
+```
+
+### Linting with Ruff
+
+Check code quality and catch common issues:
+
+```bash
+poetry run ruff check backend/
+```
+
+### Running Tests
+
+Execute the test suite (when tests are added):
+
+```bash
+poetry run pytest
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Quickstart Guide"
+    icon="rocket"
+    href="/quickstart"
+  >
+    Create your first task and event in minutes.
+  </Card>
+  <Card
+    title="Core Features"
+    icon="compass"
+    href="/features/tasks"
+  >
+    Explore all features Mintie Calendar offers.
+  </Card>
+  <Card
+    title="API Integration"
+    icon="plug"
+    href="/integration/authentication"
+  >
+    Start building integrations with the REST API.
+  </Card>
+  <Card
+    title="API Reference"
+    icon="book"
+    href="/api-reference"
+  >
+    Browse complete API documentation.
+  </Card>
+</CardGroup>
+
+## Need Help?
+
+<Card
+  title="Contact Support"
+  icon="life-ring"
+  href="mailto:support@mintie.app"
+>
+  Can't resolve an installation issue? Reach out to our support team.
+</Card>

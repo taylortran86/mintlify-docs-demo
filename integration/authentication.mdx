@@ -1,0 +1,481 @@
+---
+title: "Authentication"
+description: "Secure your API requests with API key authentication"
+icon: "key"
+---
+
+## Overview
+
+Mintie Calendar's Public API uses **API key authentication** to secure access to your account data. API keys provide a simple yet secure method for authenticating API requests without exposing user credentials.
+
+<Note>
+  This documentation covers the **Public API** authentication (`/public/v1/*` endpoints). The internal application API (`/api/*`) is designed for web interface use and does not require authentication in the demo.
+</Note>
+
+## Authentication Method
+
+### Bearer Token Authentication
+
+All Public API requests must include an API key in the `Authorization` header using the Bearer token scheme:
+
+```bash
+Authorization: Bearer YOUR_API_KEY
+```
+
+## Making Authenticated Requests
+
+### Basic Example
+
+<CodeGroup>
+```bash cURL
+curl "http://localhost:8000/public/v1/account" \
+  -H "Authorization: Bearer sk_abc123def456ghi789"
+```
+
+```python Python
+import requests
+
+API_KEY = "sk_abc123def456ghi789"
+BASE_URL = "http://localhost:8000/public/v1"
+
+headers = {
+    "Authorization": f"Bearer {API_KEY}"
+}
+
+response = requests.get(f"{BASE_URL}/account", headers=headers)
+account = response.json()
+
+print(f"Account ID: {account['id']}")
+```
+
+```javascript JavaScript
+const API_KEY = "sk_abc123def456ghi789";
+const BASE_URL = "http://localhost:8000/public/v1";
+
+const response = await fetch(`${BASE_URL}/account`, {
+  headers: {
+    "Authorization": `Bearer ${API_KEY}`
+  }
+});
+
+const account = await response.json();
+console.log(`Account ID: ${account.id}`);
+```
+
+```php PHP
+<?php
+$api_key = "sk_abc123def456ghi789";
+$base_url = "http://localhost:8000/public/v1";
+
+$ch = curl_init("$base_url/account");
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    "Authorization: Bearer $api_key"
+]);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+$response = curl_exec($ch);
+$account = json_decode($response, true);
+
+echo "Account ID: " . $account['id'];
+?>
+```
+</CodeGroup>
+
+## API Key Format
+
+Mintie Calendar API keys follow a structured format for security and identification:
+
+<ParamField path="prefix" type="string">
+  All API keys start with `sk_` (secret key prefix)
+</ParamField>
+
+<ParamField path="random_string" type="string">
+  A cryptographically secure random string (43 characters)
+</ParamField>
+
+**Example**: `sk_NrT8QJKvHx7wGzE3V9pYhL2cDm5XfU1bS6aR4oI9n0qA`
+
+<Info>
+  The `sk_` prefix makes it easy to identify API keys in code and logs, and prevents accidental exposure in version control systems (when properly configured in `.gitignore`).
+</Info>
+
+## API Key Scopes
+
+API keys can be created with specific permission scopes to limit access:
+
+<CardGroup cols={3}>
+  <Card title="READ" icon="eye">
+    View account data, analytics, and webhooks
+  </Card>
+  <Card title="WRITE" icon="pen">
+    Create and modify resources
+  </Card>
+  <Card title="ADMIN" icon="shield">
+    Full access including key management
+  </Card>
+</CardGroup>
+
+### Scope Permissions
+
+| Scope | Permissions |
+|-------|-------------|
+| **READ** | `GET` requests to view data |
+| **WRITE** | `POST`, `PATCH`, `DELETE` for resources |
+| **ADMIN** | All operations including API key management |
+
+### Creating Keys with Scopes
+
+```bash
+curl -X POST "http://localhost:8000/public/v1/api-keys" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Production Read-Only Key",
+    "scopes": ["read"]
+  }'
+```
+
+<Tip>
+  **Best Practice**: Use the principle of least privilege. Grant only the scopes necessary for each integration.
+</Tip>
+
+## Getting Your First API Key
+
+<Steps>
+  <Step title="Create an API Key">
+    Use the API Keys endpoint to generate your first key:
+
+    ```bash
+    curl -X POST "http://localhost:8000/public/v1/api-keys" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "name": "My First API Key",
+        "scopes": ["read", "write"]
+      }'
+    ```
+  </Step>
+
+  <Step title="Save the API Key">
+    The response includes your API key. **Save it immediately** - you won't see it again:
+
+    ```json
+    {
+      "id": "key_12345",
+      "name": "My First API Key",
+      "key": "sk_NrT8QJKvHx7wGzE3V9pYhL2cDm5XfU1bS6aR4oI9n0qA",
+      "prefix": "sk_NrT8...I9n0qA",
+      "scopes": ["read", "write"],
+      "created_at": "2025-11-14T10:00:00",
+      "expires_at": null
+    }
+    ```
+
+    <Warning>
+      The `key` field is only returned once during creation. Store it securely!
+    </Warning>
+  </Step>
+
+  <Step title="Test Your Key">
+    Verify it works by making an authenticated request:
+
+    ```bash
+    curl "http://localhost:8000/public/v1/account" \
+      -H "Authorization: Bearer sk_NrT8QJKvHx7wGzE3V9pYhL2cDm5XfU1bS6aR4oI9n0qA"
+    ```
+  </Step>
+</Steps>
+
+## Authentication Errors
+
+### Missing or Invalid API Key
+
+If authentication fails, you'll receive a `401 Unauthorized` response:
+
+```json
+{
+  "detail": "Invalid API key"
+}
+```
+
+**Common causes:**
+- Missing `Authorization` header
+- Incorrect Bearer token format
+- Expired or revoked API key
+- Typo in the API key
+
+### Insufficient Permissions
+
+If your API key lacks the required scope, you'll receive a `403 Forbidden` response:
+
+```json
+{
+  "detail": "Insufficient permissions. Required scope: write"
+}
+```
+
+**Solution**: Create a new API key with appropriate scopes or use a key with admin privileges.
+
+## Security Best Practices
+
+<AccordionGroup>
+  <Accordion title="Never Expose API Keys">
+    - Don't commit keys to version control (use `.env` files and `.gitignore`)
+    - Don't hardcode keys in client-side code
+    - Don't share keys in public forums or screenshots
+    - Rotate keys regularly
+
+    **Example `.gitignore`:**
+    ```
+    .env
+    .env.local
+    api_keys.txt
+    secrets/
+    ```
+  </Accordion>
+
+  <Accordion title="Use Environment Variables">
+    Store API keys in environment variables, not in code:
+
+    <CodeGroup>
+    ```bash Shell
+    export MINTIE_API_KEY="sk_NrT8QJKvHx7wGzE3V9pYhL2cDm5XfU1bS6aR4oI9n0qA"
+    ```
+
+    ```python Python
+    import os
+
+    API_KEY = os.environ.get("MINTIE_API_KEY")
+
+    if not API_KEY:
+        raise ValueError("MINTIE_API_KEY environment variable not set")
+    ```
+
+    ```javascript JavaScript (Node.js)
+    require('dotenv').config();
+
+    const API_KEY = process.env.MINTIE_API_KEY;
+
+    if (!API_KEY) {
+      throw new Error("MINTIE_API_KEY environment variable not set");
+    }
+    ```
+    </CodeGroup>
+  </Accordion>
+
+  <Accordion title="Implement Key Rotation">
+    Regularly rotate API keys to minimize security risk:
+
+    ```python
+    import requests
+    import os
+
+    # Create new key
+    new_key_response = requests.post(
+        "http://localhost:8000/public/v1/api-keys",
+        json={
+            "name": "Production Key (Rotated 2025-11)",
+            "scopes": ["read", "write"]
+        },
+        headers={"Authorization": f"Bearer {os.environ['MINTIE_API_KEY']}"}
+    )
+
+    new_key = new_key_response.json()["key"]
+
+    # Update your application configuration
+    print(f"New key: {new_key}")
+    print("Update MINTIE_API_KEY environment variable")
+
+    # After deployment, revoke old key
+    # requests.delete(
+    #     f"http://localhost:8000/public/v1/api-keys/{old_key_id}",
+    #     headers={"Authorization": f"Bearer {new_key}"}
+    # )
+    ```
+  </Accordion>
+
+  <Accordion title="Use HTTPS in Production">
+    Always use HTTPS in production to encrypt API keys in transit:
+
+    ```python
+    # Development (HTTP)
+    BASE_URL = "http://localhost:8000/public/v1"
+
+    # Production (HTTPS)
+    BASE_URL = "https://api.mintie.app/v1"
+    ```
+
+    <Warning>
+      Never send API keys over unencrypted HTTP in production environments.
+    </Warning>
+  </Accordion>
+
+  <Accordion title="Implement Rate Limiting">
+    Monitor your API usage and implement rate limiting to detect anomalies:
+
+    ```python
+    from functools import wraps
+    from time import time, sleep
+
+    class RateLimiter:
+        def __init__(self, max_calls, period):
+            self.max_calls = max_calls
+            self.period = period
+            self.calls = []
+
+        def __call__(self, func):
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                now = time()
+                self.calls = [c for c in self.calls if c > now - self.period]
+
+                if len(self.calls) >= self.max_calls:
+                    sleep_time = self.period - (now - self.calls[0])
+                    sleep(sleep_time)
+
+                self.calls.append(time())
+                return func(*args, **kwargs)
+            return wrapper
+
+    # Limit to 100 calls per minute
+    @RateLimiter(max_calls=100, period=60)
+    def make_api_request(endpoint):
+        # Your API call here
+        pass
+    ```
+  </Accordion>
+
+  <Accordion title="Monitor API Key Usage">
+    Track when and where your API keys are being used:
+
+    ```bash
+    # Check API key details including last used timestamp
+    curl "http://localhost:8000/public/v1/api-keys/key_12345" \
+      -H "Authorization: Bearer YOUR_API_KEY"
+    ```
+
+    Regularly review:
+    - `last_used_at`: When the key was last used
+    - Unexpected access patterns
+    - Keys that haven't been used in months (candidate for revocation)
+  </Accordion>
+</AccordionGroup>
+
+## Authentication Flow
+
+<Steps>
+  <Step title="Client Obtains API Key">
+    User creates an API key through the dashboard or API
+  </Step>
+
+  <Step title="Client Stores Key Securely">
+    Key is stored in environment variables or secure key management system
+  </Step>
+
+  <Step title="Client Makes Request">
+    API key is included in the `Authorization` header with Bearer scheme
+  </Step>
+
+  <Step title="Server Validates Key">
+    Mintie Calendar verifies the key exists, is not expired, and has required scopes
+  </Step>
+
+  <Step title="Server Returns Response">
+    If valid, the API returns the requested data. If invalid, a 401/403 error is returned
+  </Step>
+</Steps>
+
+## Testing Authentication
+
+### Verify Your Setup
+
+Test your authentication configuration:
+
+<CodeGroup>
+```python Python
+import requests
+import os
+
+def test_auth():
+    """Test API key authentication"""
+    api_key = os.environ.get("MINTIE_API_KEY")
+
+    if not api_key:
+        print("❌ MINTIE_API_KEY not set")
+        return False
+
+    headers = {"Authorization": f"Bearer {api_key}"}
+    response = requests.get(
+        "http://localhost:8000/public/v1/account",
+        headers=headers
+    )
+
+    if response.status_code == 200:
+        print("✅ Authentication successful")
+        print(f"Account: {response.json()}")
+        return True
+    else:
+        print(f"❌ Authentication failed: {response.status_code}")
+        print(response.json())
+        return False
+
+if __name__ == "__main__":
+    test_auth()
+```
+
+```bash Shell
+#!/bin/bash
+
+# Test authentication
+if [ -z "$MINTIE_API_KEY" ]; then
+  echo "❌ MINTIE_API_KEY not set"
+  exit 1
+fi
+
+response=$(curl -s -w "\n%{http_code}" \
+  "http://localhost:8000/public/v1/account" \
+  -H "Authorization: Bearer $MINTIE_API_KEY")
+
+status_code=$(echo "$response" | tail -n1)
+body=$(echo "$response" | sed '$d')
+
+if [ "$status_code" = "200" ]; then
+  echo "✅ Authentication successful"
+  echo "$body" | jq .
+else
+  echo "❌ Authentication failed: $status_code"
+  echo "$body" | jq .
+fi
+```
+</CodeGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="API Keys"
+    icon="key"
+    href="/integration/api-keys"
+  >
+    Learn how to create and manage API keys
+  </Card>
+  <Card
+    title="Webhooks"
+    icon="webhook"
+    href="/integration/webhooks"
+  >
+    Set up webhooks for real-time notifications
+  </Card>
+  <Card
+    title="Analytics"
+    icon="chart-line"
+    href="/integration/analytics"
+  >
+    Track API usage and application metrics
+  </Card>
+  <Card
+    title="API Reference"
+    icon="code"
+    href="/api-reference"
+  >
+    Browse complete API documentation
+  </Card>
+</CardGroup>

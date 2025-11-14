@@ -1,0 +1,320 @@
+---
+title: "Task Management Guide"
+description: "Complete guide to organizing and tracking tasks effectively"
+icon: "list-check"
+---
+
+## Introduction
+
+This guide walks you through common task management workflows using Mintie Calendar, from basic task creation to advanced automation.
+
+## Basic Task Workflow
+
+<Steps>
+  <Step title="Create a Task">
+    ```bash
+    curl -X POST "http://localhost:8000/api/tasks" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "title": "Write documentation",
+        "description": "Complete API docs for v1",
+        "item_type": "task",
+        "due_date": "2025-11-20T17:00:00"
+      }'
+    ```
+  </Step>
+
+  <Step title="Track Progress">
+    List active tasks to see what needs attention:
+    ```bash
+    curl "http://localhost:8000/api/tasks?completed=false"
+    ```
+  </Step>
+
+  <Step title="Mark Complete">
+    When finished, update the task:
+    ```bash
+    curl -X PATCH "http://localhost:8000/api/tasks/1" \
+      -H "Content-Type: application/json" \
+      -d '{"completed": true}'
+    ```
+  </Step>
+
+  <Step title="Review Completed">
+    Check what you've accomplished:
+    ```bash
+    curl "http://localhost:8000/api/tasks?completed=true"
+    ```
+  </Step>
+</Steps>
+
+## Daily Task Management
+
+### Morning Routine
+
+Start your day by reviewing tasks:
+
+```python
+import requests
+from datetime import datetime, timedelta
+
+API_URL = "http://localhost:8000/api"
+
+# Get today's tasks (due today)
+today = datetime.now()
+response = requests.get(f"{API_URL}/tasks?completed=false")
+tasks = response.json()
+
+today_tasks = [
+    t for t in tasks
+    if t.get("due_date") and
+    datetime.fromisoformat(t["due_date"]).date() == today.date()
+]
+
+print(f"📋 Tasks due today: {len(today_tasks)}")
+for task in today_tasks:
+    print(f"  - {task['title']}")
+```
+
+### End-of-Day Review
+
+Review and update tasks before ending your workday:
+
+```python
+# Check overdue tasks
+overdue = [
+    t for t in tasks
+    if t.get("due_date") and
+    datetime.fromisoformat(t["due_date"]) < datetime.now()
+]
+
+if overdue:
+    print(f"⚠️  {len(overdue)} overdue tasks")
+
+# Complete finished tasks
+for task_id in completed_today:
+    requests.patch(
+        f"{API_URL}/tasks/{task_id}",
+        json={"completed": True}
+    )
+```
+
+## Organizing Tasks
+
+### By Priority
+
+Use naming conventions for priority:
+
+```python
+priorities = {
+    "high": ["🔴 Critical bug fix", "🔴 Client demo prep"],
+    "medium": ["🟡 Code review", "🟡 Update docs"],
+    "low": ["🟢 Refactor utils", "🟢 Clean up tests"]
+}
+
+for priority, titles in priorities.items():
+    for title in titles:
+        requests.post(
+            f"{API_URL}/tasks",
+            json={"title": title, "item_type": "task"}
+        )
+```
+
+### By Project
+
+Use consistent prefixes:
+
+```python
+projects = {
+    "[API]": "Implement new endpoint",
+    "[DOCS]": "Write integration guide",
+    "[UI]": "Update dashboard layout"
+}
+
+for prefix, title in projects.items():
+    requests.post(
+        f"{API_URL}/tasks",
+        json={"title": f"{prefix} {title}", "item_type": "task"}
+    )
+```
+
+## Automation Examples
+
+### Recurring Task Creation
+
+```python
+from datetime import datetime, timedelta
+
+def create_weekly_tasks():
+    """Create weekly recurring tasks"""
+    monday = datetime.now()
+    while monday.weekday() != 0:  # Find next Monday
+        monday += timedelta(days=1)
+
+    weekly_tasks = [
+        {"title": "Weekly planning", "day": 0, "hour": 9},
+        {"title": "Team standup", "day": 2, "hour": 10},
+        {"title": "Status report", "day": 4, "hour": 16}
+    ]
+
+    for task_info in weekly_tasks:
+        due_date = monday + timedelta(
+            days=task_info["day"],
+            hours=task_info["hour"]
+        )
+
+        requests.post(
+            f"{API_URL}/tasks",
+            json={
+                "title": task_info["title"],
+                "item_type": "task",
+                "due_date": due_date.isoformat()
+            }
+        )
+
+create_weekly_tasks()
+```
+
+### Bulk Task Import
+
+```python
+import csv
+
+def import_tasks_from_csv(filename):
+    """Import tasks from CSV file"""
+    with open(filename, 'r') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            task_data = {
+                "title": row["title"],
+                "description": row.get("description", ""),
+                "item_type": "task"
+            }
+
+            if row.get("due_date"):
+                task_data["due_date"] = row["due_date"]
+
+            requests.post(f"{API_URL}/tasks", json=task_data)
+            print(f"✅ Imported: {row['title']}")
+
+import_tasks_from_csv("tasks.csv")
+```
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Set Realistic Due Dates">
+    Add buffer time and account for dependencies:
+
+    ```python
+    from datetime import datetime, timedelta
+
+    # Add 20% buffer to estimates
+    estimated_hours = 4
+    buffer = estimated_hours * 0.2
+    due_date = datetime.now() + timedelta(hours=estimated_hours + buffer)
+    ```
+  </Accordion>
+
+  <Accordion title="Review Tasks Regularly">
+    Schedule weekly reviews to update priorities and remove obsolete tasks.
+  </Accordion>
+
+  <Accordion title="Break Down Large Tasks">
+    Split complex tasks into smaller, actionable items:
+
+    ```python
+    main_task = "Launch new feature"
+    subtasks = [
+        "Design UI mockups",
+        "Implement backend API",
+        "Write frontend components",
+        "Add tests",
+        "Deploy to staging",
+        "QA testing",
+        "Deploy to production"
+    ]
+    ```
+  </Accordion>
+
+  <Accordion title="Use Consistent Naming">
+    Establish conventions for task titles to make filtering easier:
+
+    - Start with action verbs: "Review", "Update", "Fix"
+    - Include context: "API: Add new endpoint"
+    - Be specific: "Fix login bug on Chrome" not "Fix bug"
+  </Accordion>
+</AccordionGroup>
+
+## Integration Examples
+
+### Slack Notifications
+
+Send task reminders to Slack:
+
+```python
+import requests
+from datetime import datetime, timedelta
+
+SLACK_WEBHOOK = "https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
+
+# Get tasks due in next hour
+response = requests.get(f"{API_URL}/tasks?completed=false")
+tasks = response.json()
+
+soon = datetime.now() + timedelta(hours=1)
+upcoming = [
+    t for t in tasks
+    if t.get("due_date") and
+    datetime.fromisoformat(t["due_date"]) <= soon
+]
+
+if upcoming:
+    message = "⏰ *Tasks due soon:*\n"
+    for task in upcoming:
+        message += f"• {task['title']}\n"
+
+    requests.post(SLACK_WEBHOOK, json={"text": message})
+```
+
+### Email Digest
+
+Send daily task summary via email:
+
+```python
+import smtplib
+from email.mime.text import MIMEText
+
+def send_daily_digest():
+    response = requests.get(f"{API_URL}/tasks?completed=false")
+    tasks = response.json()
+
+    body = f"You have {len(tasks)} active tasks:\n\n"
+    for task in tasks[:10]:  # Top 10
+        body += f"- {task['title']}\n"
+
+    msg = MIMEText(body)
+    msg['Subject'] = '📋 Daily Task Digest'
+    msg['From'] = 'mintie@example.com'
+    msg['To'] = 'you@example.com'
+
+    with smtplib.SMTP('localhost') as server:
+        server.send_message(msg)
+```
+
+## Related Resources
+
+<CardGroup cols={2}>
+  <Card title="Task Features" icon="list-check" href="/features/tasks">
+    Detailed task feature documentation
+  </Card>
+  <Card title="Calendar Integration" icon="calendar" href="/guides/calendar-integration">
+    Combine tasks with calendar events
+  </Card>
+  <Card title="Webhooks" icon="webhook" href="/integration/webhooks">
+    Get notified of task changes
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference">
+    Complete API documentation
+  </Card>
+</CardGroup>

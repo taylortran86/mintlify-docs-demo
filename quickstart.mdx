@@ -1,80 +1,229 @@
 ---
 title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+description: "Get started with Mintie Calendar in under 5 minutes"
+icon: "rocket"
 ---
 
-## Get started in three steps
+## Get Mintie Calendar Running
 
-Get your documentation site running locally and make your first customization.
+Follow these steps to get Mintie Calendar up and running on your local machine.
 
-### Step 1: Set up your local environment
+<Steps>
+  <Step title="Prerequisites">
+    Before you begin, ensure you have the following installed:
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+    - **Python 3.8 or higher** - [Download Python](https://python.org/downloads)
+    - **Poetry** (recommended) - [Install Poetry](https://python-poetry.org/docs/#installation)
 
-### Step 2: Deploy your changes
+    Alternatively, you can use `pip` instead of Poetry.
+  </Step>
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
+  <Step title="Clone or Download">
+    Navigate to the project directory:
+
+    ```bash
+    cd mintlify-project-demo
+    ```
+  </Step>
+
+  <Step title="Install Dependencies">
+    Choose your preferred method:
+
+    <Tabs>
+      <Tab title="Poetry (Recommended)">
+        ```bash
+        poetry install
+        ```
+
+        Poetry will automatically create a virtual environment and install all dependencies.
+      </Tab>
+
+      <Tab title="pip">
+        ```bash
+        # Create virtual environment
+        python -m venv venv
+
+        # Activate virtual environment
+        # On macOS/Linux:
+        source venv/bin/activate
+        # On Windows:
+        venv\Scripts\activate
+
+        # Install dependencies
+        pip install -r requirements.txt
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+
+  <Step title="Start the Server">
+    Launch the FastAPI backend server:
+
+    <Tabs>
+      <Tab title="Poetry">
+        ```bash
+        poetry run uvicorn backend.main:app --reload
+        ```
+      </Tab>
+
+      <Tab title="pip">
+        ```bash
+        python -m uvicorn backend.main:app --reload
+        ```
+      </Tab>
+    </Tabs>
+
+    You should see output indicating the server is running:
+    ```
+    INFO:     Uvicorn running on http://127.0.0.1:8000
+    INFO:     Application startup complete.
+    ```
+  </Step>
+
+  <Step title="Access the Application">
+    Open your browser and navigate to:
+
+    - **Web Application**: [http://localhost:8000/static/index.html](http://localhost:8000/static/index.html)
+    - **API Documentation**: [http://localhost:8000/public/docs](http://localhost:8000/public/docs)
+    - **Internal API Docs**: [http://localhost:8000/internal/docs](http://localhost:8000/internal/docs)
+  </Step>
+</Steps>
+
+## Your First Task
+
+Let's create your first task using the web interface.
+
+<Steps>
+  <Step title="Open the Application">
+    Navigate to [http://localhost:8000/static/index.html](http://localhost:8000/static/index.html)
+  </Step>
+
+  <Step title="Click 'Add Task'">
+    Click the "Add Task" button in the Tasks section.
+  </Step>
+
+  <Step title="Fill in Task Details">
+    - **Title**: "Learn Mintie Calendar"
+    - **Description**: "Explore all features of Mintie Calendar"
+    - **Due Date**: Select tomorrow's date (optional)
+  </Step>
+
+  <Step title="Save the Task">
+    Click "Add Task" to save. Your task will appear in the task list immediately!
+  </Step>
+</Steps>
+
+## Your First Event
+
+Now let's schedule a calendar event.
+
+<Steps>
+  <Step title="Click 'Add Event'">
+    Click the "Add Event" button in the Events section.
+  </Step>
+
+  <Step title="Fill in Event Details">
+    - **Title**: "Team Standup"
+    - **Description**: "Daily team sync meeting"
+    - **Start Time**: Today at 10:00 AM
+    - **End Time**: Today at 10:30 AM
+  </Step>
+
+  <Step title="Save the Event">
+    Click "Add Event" to save. The event will appear in your calendar list!
+  </Step>
+</Steps>
+
+## Making Your First API Call
+
+Let's interact with the API directly using cURL.
+
+### Create a Task via API
+
+```bash
+curl -X POST "http://localhost:8000/api/tasks" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Complete API integration",
+    "description": "Set up API keys and webhooks",
+    "item_type": "task",
+    "due_date": "2025-12-01T17:00:00"
+  }'
+```
+
+<Accordion title="View Response">
+```json
+{
+  "id": 1,
+  "title": "Complete API integration",
+  "description": "Set up API keys and webhooks",
+  "item_type": "task",
+  "completed": false,
+  "due_date": "2025-12-01T17:00:00",
+  "created_at": "2025-11-14T10:00:00"
+}
+```
 </Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+### List All Tasks
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+```bash
+curl http://localhost:8000/api/tasks
+```
 
-### Step 3: Go live
+### Create a Calendar Event via API
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+```bash
+curl -X POST "http://localhost:8000/api/events" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Product Launch",
+    "description": "Launch new feature to customers",
+    "item_type": "event",
+    "start_time": "2025-12-15T14:00:00",
+    "end_time": "2025-12-15T15:00:00"
+  }'
+```
 
-## Next steps
-
-Now that you have your docs running, explore these key features:
+## Next Steps
 
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card
+    title="Explore Features"
+    icon="compass"
+    href="/features/tasks"
+  >
+    Learn about all the powerful features Mintie Calendar offers.
+  </Card>
+  <Card
+    title="API Integration"
+    icon="code"
+    href="/integration/authentication"
+  >
+    Set up API keys and start building integrations.
+  </Card>
+  <Card
+    title="Set Up Webhooks"
+    icon="webhook"
+    href="/integration/webhooks"
+  >
+    Receive real-time notifications for events and tasks.
+  </Card>
+  <Card
+    title="API Reference"
+    icon="book"
+    href="/api-reference"
+  >
+    Explore the complete API documentation.
+  </Card>
 </CardGroup>
 
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>
+## Need Help?
+
+<Card
+  title="Installation Guide"
+  icon="book-open"
+  href="/installation"
+>
+  For detailed installation instructions and troubleshooting, check out our comprehensive installation guide.
+</Card>

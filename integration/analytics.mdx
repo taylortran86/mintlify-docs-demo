@@ -1,0 +1,125 @@
+---
+title: "Analytics & Metrics"
+description: "Track usage statistics and monitor application performance"
+icon: "chart-line"
+---
+
+## Overview
+
+Mintie Calendar's Analytics API provides insights into your usage patterns, helping you understand task completion rates, event scheduling trends, and API consumption.
+
+## Get Analytics
+
+Retrieve usage statistics for various time periods:
+
+```bash
+curl "http://localhost:8000/public/v1/analytics?period=last_30_days" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+### Available Periods
+
+<ParamField query="period" type="string" default="last_7_days">
+  Time period for analytics data
+
+  **Options**:
+  - `last_7_days` - Past week
+  - `last_30_days` - Past month
+  - `last_90_days` - Past quarter
+  - `current_month` - Month to date
+</ParamField>
+
+## Analytics Response
+
+```json
+{
+  "period": "last_30_days",
+  "tasks_created": 127,
+  "tasks_completed": 98,
+  "tasks_active": 29,
+  "events_created": 45,
+  "upcoming_events": 12,
+  "api_calls": 3450,
+  "top_categories": ["Work", "Personal", "Meetings"]
+}
+```
+
+## Usage Statistics
+
+Get detailed usage metrics:
+
+```bash
+curl "http://localhost:8000/public/v1/analytics/usage" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+## Metrics Explained
+
+<AccordionGroup>
+  <Accordion title="Task Metrics">
+    - **tasks_created**: Total tasks created in period
+    - **tasks_completed**: Tasks marked as complete
+    - **tasks_active**: Currently incomplete tasks
+    - **Completion Rate**: `(tasks_completed / tasks_created) × 100%`
+  </Accordion>
+
+  <Accordion title="Event Metrics">
+    - **events_created**: Calendar events scheduled
+    - **upcoming_events**: Future events not yet passed
+  </Accordion>
+
+  <Accordion title="API Metrics">
+    - **api_calls**: Total API requests made
+    - **Average daily calls**: `api_calls / days_in_period`
+  </Accordion>
+</AccordionGroup>
+
+## Use Cases
+
+<Tabs>
+  <Tab title="Productivity Dashboard">
+    ```python
+    import requests
+
+    response = requests.get(
+        "http://localhost:8000/public/v1/analytics",
+        params={"period": "current_month"},
+        headers={"Authorization": f"Bearer {API_KEY}"}
+    )
+
+    analytics = response.json()
+    completion_rate = (analytics["tasks_completed"] /
+                      analytics["tasks_created"] * 100)
+
+    print(f"📊 Monthly Productivity Report")
+    print(f"Tasks Completed: {analytics['tasks_completed']}")
+    print(f"Completion Rate: {completion_rate:.1f}%")
+    print(f"Upcoming Events: {analytics['upcoming_events']}")
+    ```
+  </Tab>
+
+  <Tab title="API Usage Monitoring">
+    ```python
+    response = requests.get(
+        "http://localhost:8000/public/v1/analytics/usage",
+        headers={"Authorization": f"Bearer {API_KEY}"}
+    )
+
+    usage = response.json()
+
+    if usage["api_calls"] > 10000:
+        print("⚠️  High API usage detected")
+    ```
+  </Tab>
+</Tabs>
+
+## Related Resources
+
+<CardGroup cols={2}>
+  <Card title="Task Management" icon="list-check" href="/features/tasks">
+    Learn about task features
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference">
+    Complete API documentation
+  </Card>
+</CardGroup>

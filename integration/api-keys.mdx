@@ -1,0 +1,527 @@
+---
+title: "API Key Management"
+description: "Create, manage, and secure your Mintie Calendar API keys"
+icon: "shield-halved"
+---
+
+## Overview
+
+API keys are the primary method for authenticating requests to the Mintie Calendar Public API. This guide covers everything you need to know about creating, managing, and securing your API keys.
+
+## Creating API Keys
+
+### Create Your First Key
+
+<CodeGroup>
+```bash cURL
+curl -X POST "http://localhost:8000/public/v1/api-keys" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Production API Key",
+    "scopes": ["read", "write"],
+    "expires_at": "2026-12-31T23:59:59"
+  }'
+```
+
+```python Python
+import requests
+from datetime import datetime, timedelta
+
+# Create a key that expires in 1 year
+expires = datetime.now() + timedelta(days=365)
+
+key_data = {
+    "name": "Production API Key",
+    "scopes": ["read", "write"],
+    "expires_at": expires.isoformat()
+}
+
+response = requests.post(
+    "http://localhost:8000/public/v1/api-keys",
+    json=key_data
+)
+
+api_key = response.json()
+print(f"New API Key: {api_key['key']}")
+print("⚠️  Save this key - you won't see it again!")
+```
+
+```javascript JavaScript
+const expiresAt = new Date();
+expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+
+const keyData = {
+  name: "Production API Key",
+  scopes: ["read", "write"],
+  expires_at: expiresAt.toISOString()
+};
+
+const response = await fetch("http://localhost:8000/public/v1/api-keys", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(keyData)
+});
+
+const apiKey = await response.json();
+console.log(`New API Key: ${apiKey.key}`);
+console.log("⚠️  Save this key - you won't see it again!");
+```
+</CodeGroup>
+
+### Request Parameters
+
+<ParamField path="name" type="string" required>
+  A descriptive name for the API key (1-100 characters)
+
+  **Examples**: "Production Server", "Mobile App", "Analytics Dashboard"
+</ParamField>
+
+<ParamField path="scopes" type="array" required>
+  List of permission scopes for the key
+
+  **Options**: `["read"]`, `["write"]`, `["admin"]`, `["read", "write"]`
+</ParamField>
+
+<ParamField path="expires_at" type="datetime">
+  Optional expiration date in ISO 8601 format
+
+  **Default**: No expiration (key is valid indefinitely)
+</ParamField>
+
+### Response
+
+```json
+{
+  "id": "key_abc123",
+  "name": "Production API Key",
+  "key": "sk_NrT8QJKvHx7wGzE3V9pYhL2cDm5XfU1bS6aR4oI9n0qA",
+  "prefix": "sk_NrT8...I9n0qA",
+  "scopes": ["read", "write"],
+  "created_at": "2025-11-14T10:00:00",
+  "expires_at": "2026-12-31T23:59:59",
+  "last_used_at": null,
+  "is_active": true
+}
+```
+
+<Warning>
+  The `key` field is only returned once during creation. Store it in a secure location immediately!
+</Warning>
+
+## Listing API Keys
+
+View all API keys for your account:
+
+```bash
+curl "http://localhost:8000/public/v1/api-keys" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+**Response:**
+
+```json
+{
+  "keys": [
+    {
+      "id": "key_abc123",
+      "name": "Production API Key",
+      "prefix": "sk_NrT8...I9n0qA",
+      "scopes": ["read", "write"],
+      "created_at": "2025-11-14T10:00:00",
+      "expires_at": "2026-12-31T23:59:59",
+      "last_used_at": "2025-11-14T15:30:00",
+      "is_active": true
+    },
+    {
+      "id": "key_def456",
+      "name": "Read-Only Analytics",
+      "prefix": "sk_AbC1...XyZ9",
+      "scopes": ["read"],
+      "created_at": "2025-10-01T09:00:00",
+      "expires_at": null,
+      "last_used_at": "2025-11-14T14:00:00",
+      "is_active": true
+    }
+  ],
+  "total": 2
+}
+```
+
+<Note>
+  For security, the full API key is never returned after creation. Only the prefix is shown.
+</Note>
+
+## Getting Key Details
+
+Retrieve information about a specific API key:
+
+```bash
+curl "http://localhost:8000/public/v1/api-keys/key_abc123" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+Useful for checking:
+- When the key was last used
+- Current expiration status
+- Assigned scopes
+- Creation date
+
+## Revoking API Keys
+
+Delete keys that are no longer needed or may be compromised:
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE "http://localhost:8000/public/v1/api-keys/key_abc123" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+```python Python
+import requests
+
+response = requests.delete(
+    "http://localhost:8000/public/v1/api-keys/key_abc123",
+    headers={"Authorization": f"Bearer {YOUR_API_KEY}"}
+)
+
+if response.status_code == 204:
+    print("✅ API key revoked successfully")
+```
+
+```javascript JavaScript
+const response = await fetch(
+  "http://localhost:8000/public/v1/api-keys/key_abc123",
+  {
+    method: "DELETE",
+    headers: { "Authorization": `Bearer ${YOUR_API_KEY}` }
+  }
+);
+
+if (response.status_code === 204) {
+  console.log("✅ API key revoked successfully");
+}
+```
+</CodeGroup>
+
+<Warning>
+  Revoking a key is immediate and irreversible. Any applications using that key will lose access instantly.
+</Warning>
+
+## API Key Scopes
+
+### Permission Levels
+
+<CardGroup cols={3}>
+  <Card title="READ" icon="eye">
+    View account data, analytics, and configurations
+  </Card>
+  <Card title="WRITE" icon="pen">
+    Create, update, and delete resources
+  </Card>
+  <Card title="ADMIN" icon="crown">
+    Full access including API key management
+  </Card>
+</CardGroup>
+
+### Scope Matrix
+
+| Action | READ | WRITE | ADMIN |
+|--------|------|-------|-------|
+| View account info | ✅ | ✅ | ✅ |
+| Get analytics | ✅ | ✅ | ✅ |
+| List webhooks | ✅ | ✅ | ✅ |
+| Create webhooks | ❌ | ✅ | ✅ |
+| Update webhooks | ❌ | ✅ | ✅ |
+| Delete webhooks | ❌ | ✅ | ✅ |
+| List API keys | ❌ | ❌ | ✅ |
+| Create API keys | ❌ | ❌ | ✅ |
+| Revoke API keys | ❌ | ❌ | ✅ |
+
+### Choosing the Right Scopes
+
+<Tabs>
+  <Tab title="Analytics Dashboard">
+    ```json
+    {
+      "name": "Analytics Dashboard",
+      "scopes": ["read"]
+    }
+    ```
+
+    Read-only access for viewing metrics and usage data.
+  </Tab>
+
+  <Tab title="Webhook Integration">
+    ```json
+    {
+      "name": "Webhook Manager",
+      "scopes": ["read", "write"]
+    }
+    ```
+
+    Ability to create and manage webhook subscriptions.
+  </Tab>
+
+  <Tab title="Admin Tool">
+    ```json
+    {
+      "name": "Admin Dashboard",
+      "scopes": ["read", "write", "admin"]
+    }
+    ```
+
+    Full access for administrative operations including key management.
+  </Tab>
+
+  <Tab title="CI/CD Pipeline">
+    ```json
+    {
+      "name": "GitHub Actions",
+      "scopes": ["write"]
+    }
+    ```
+
+    Write access for automated deployments without admin privileges.
+  </Tab>
+</Tabs>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Use Descriptive Names">
+    Include the purpose and environment in key names:
+
+    ✅ Good: "Production Mobile App", "Staging Analytics", "Dev Environment"
+
+    ❌ Bad: "Key 1", "Test", "My Key"
+  </Accordion>
+
+  <Accordion title="Set Expiration Dates">
+    Use expiration dates for temporary or short-term keys:
+
+    ```python
+    from datetime import datetime, timedelta
+
+    # Key for a 3-month project
+    expires = datetime.now() + timedelta(days=90)
+
+    key_data = {
+        "name": "Q4 Campaign Integration",
+        "scopes": ["read", "write"],
+        "expires_at": expires.isoformat()
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Rotate Keys Regularly">
+    Implement a key rotation schedule:
+
+    1. Create a new API key
+    2. Update applications to use the new key
+    3. Monitor the old key's `last_used_at`
+    4. Revoke the old key after confirming no usage
+
+    **Recommended rotation frequency**: Every 90 days for production keys
+  </Accordion>
+
+  <Accordion title="Use Minimal Scopes">
+    Grant only the permissions needed:
+
+    ```python
+    # Analytics service only needs read access
+    analytics_key = {
+        "name": "Analytics Service",
+        "scopes": ["read"]
+    }
+
+    # Admin dashboard needs full access
+    admin_key = {
+        "name": "Admin Dashboard",
+        "scopes": ["read", "write", "admin"]
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Monitor Key Usage">
+    Regularly check `last_used_at` timestamps:
+
+    ```python
+    import requests
+    from datetime import datetime, timedelta
+
+    response = requests.get(
+        "http://localhost:8000/public/v1/api-keys",
+        headers={"Authorization": f"Bearer {YOUR_API_KEY}"}
+    )
+
+    keys = response.json()["keys"]
+    thirty_days_ago = datetime.now() - timedelta(days=30)
+
+    for key in keys:
+        last_used = key.get("last_used_at")
+        if not last_used or datetime.fromisoformat(last_used) < thirty_days_ago:
+            print(f"⚠️  Unused key: {key['name']} (ID: {key['id']})")
+    ```
+  </Accordion>
+
+  <Accordion title="Revoke Compromised Keys Immediately">
+    If a key is exposed:
+
+    1. **Immediately revoke the compromised key**
+    2. Create a new key with the same permissions
+    3. Update all applications using the old key
+    4. Review access logs for suspicious activity
+    5. Consider revoking all keys and rotating
+  </Accordion>
+</AccordionGroup>
+
+## Key Lifecycle Management
+
+<Steps>
+  <Step title="Creation">
+    Generate a new API key with appropriate scopes and expiration
+  </Step>
+
+  <Step title="Deployment">
+    Store the key securely (environment variables, secrets manager)
+  </Step>
+
+  <Step title="Monitoring">
+    Track key usage via `last_used_at` timestamp
+  </Step>
+
+  <Step title="Rotation">
+    Create replacement keys before expiration
+  </Step>
+
+  <Step title="Revocation">
+    Delete old or compromised keys
+  </Step>
+</Steps>
+
+## Common Patterns
+
+### Environment-Based Keys
+
+```python
+import os
+
+ENVIRONMENT = os.environ.get("ENV", "development")
+
+# Different keys for different environments
+API_KEYS = {
+    "development": os.environ.get("MINTIE_API_KEY_DEV"),
+    "staging": os.environ.get("MINTIE_API_KEY_STAGING"),
+    "production": os.environ.get("MINTIE_API_KEY_PROD")
+}
+
+API_KEY = API_KEYS[ENVIRONMENT]
+```
+
+### Service-Specific Keys
+
+```python
+# Create dedicated keys for each service
+services = [
+    {"name": "Mobile App", "scopes": ["read", "write"]},
+    {"name": "Web Dashboard", "scopes": ["read", "write"]},
+    {"name": "Analytics Engine", "scopes": ["read"]},
+    {"name": "Admin Panel", "scopes": ["read", "write", "admin"]}
+]
+
+for service in services:
+    response = requests.post(
+        "http://localhost:8000/public/v1/api-keys",
+        json=service
+    )
+    print(f"Created key for {service['name']}")
+```
+
+### Temporary Access Keys
+
+```python
+from datetime import datetime, timedelta
+
+# Create a key that expires in 24 hours
+expires = datetime.now() + timedelta(hours=24)
+
+temp_key = {
+    "name": "Demo Access - Expires 24h",
+    "scopes": ["read"],
+    "expires_at": expires.isoformat()
+}
+
+response = requests.post(
+    "http://localhost:8000/public/v1/api-keys",
+    json=temp_key
+)
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="401 Unauthorized Error">
+    **Problem**: API returns "Invalid API key"
+
+    **Solutions**:
+    - Verify the key is correctly copied (no extra spaces)
+    - Check if the key has expired
+    - Confirm the key hasn't been revoked
+    - Ensure you're using Bearer token format
+  </Accordion>
+
+  <Accordion title="403 Forbidden Error">
+    **Problem**: "Insufficient permissions" error
+
+    **Solution**: Create a new key with required scopes or use an admin key
+  </Accordion>
+
+  <Accordion title="Lost API Key">
+    **Problem**: API key was not saved after creation
+
+    **Solution**: You cannot retrieve the full key. Create a new one and revoke the lost key:
+
+    ```bash
+    # Create new key
+    curl -X POST "http://localhost:8000/public/v1/api-keys" \
+      -H "Content-Type: application/json" \
+      -d '{"name": "Replacement Key", "scopes": ["read", "write"]}'
+
+    # Revoke lost key (if you know the ID)
+    curl -X DELETE "http://localhost:8000/public/v1/api-keys/key_lost123"
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Related Resources
+
+<CardGroup cols={2}>
+  <Card
+    title="Authentication"
+    icon="key"
+    href="/integration/authentication"
+  >
+    Learn how to use API keys for authentication
+  </Card>
+  <Card
+    title="Security Best Practices"
+    icon="shield"
+    href="/integration/authentication#security-best-practices"
+  >
+    Comprehensive security guidelines
+  </Card>
+  <Card
+    title="Webhooks"
+    icon="webhook"
+    href="/integration/webhooks"
+  >
+    Set up real-time notifications
+  </Card>
+  <Card
+    title="API Reference"
+    icon="code"
+    href="/api-reference"
+  >
+    Complete API documentation
+  </Card>
+</CardGroup>

@@ -1,0 +1,347 @@
+---
+title: "Calendar Integration Guide"
+description: "Integrate Mintie Calendar with your applications and workflows"
+icon: "calendar-days"
+---
+
+## Introduction
+
+Learn how to integrate Mintie Calendar's event system into your applications, sync with external calendars, and automate scheduling workflows.
+
+## Basic Calendar Integration
+
+### Syncing Events
+
+Fetch and display calendar events:
+
+```javascript
+async function getUpcomingEvents() {
+  const response = await fetch("http://localhost:8000/api/events");
+  const events = await response.json();
+
+  // Filter upcoming events
+  const now = new Date();
+  const upcoming = events.filter(e =>
+    new Date(e.start_time) >= now
+  ).slice(0, 5);
+
+  return upcoming;
+}
+
+// Display in UI
+const events = await getUpcomingEvents();
+events.forEach(event => {
+  console.log(`${event.start_time}: ${event.title}`);
+});
+```
+
+### Creating Events from External Sources
+
+Import events from other systems:
+
+```python
+import requests
+from datetime import datetime
+
+def sync_google_calendar_events(google_events):
+    """Sync events from Google Calendar"""
+    for g_event in google_events:
+        mintie_event = {
+            "title": g_event["summary"],
+            "description": g_event.get("description", ""),
+            "item_type": "event",
+            "start_time": g_event["start"]["dateTime"],
+            "end_time": g_event["end"]["dateTime"]
+        }
+
+        response = requests.post(
+            "http://localhost:8000/api/events",
+            json=mintie_event
+        )
+
+        if response.status_code == 201:
+            print(f"✅ Synced: {mintie_event['title']}")
+```
+
+## Two-Way Sync
+
+Implement bidirectional calendar synchronization:
+
+```python
+import requests
+from datetime import datetime
+
+class CalendarSync:
+    def __init__(self, mintie_url, external_api):
+        self.mintie_url = mintie_url
+        self.external_api = external_api
+        self.sync_map = {}  # Map external IDs to Mintie IDs
+
+    def sync_to_mintie(self, external_event):
+        """Push external event to Mintie"""
+        mintie_event = self.transform_to_mintie(external_event)
+
+        response = requests.post(
+            f"{self.mintie_url}/api/events",
+            json=mintie_event
+        )
+
+        if response.status_code == 201:
+            mintie_id = response.json()["id"]
+            self.sync_map[external_event["id"]] = mintie_id
+            return mintie_id
+
+    def sync_from_mintie(self, mintie_event):
+        """Push Mintie event to external calendar"""
+        external_event = self.transform_from_mintie(mintie_event)
+
+        external_id = self.external_api.create_event(external_event)
+        self.sync_map[external_id] = mintie_event["id"]
+        return external_id
+
+    def transform_to_mintie(self, external_event):
+        """Convert external event format to Mintie format"""
+        return {
+            "title": external_event["title"],
+            "description": external_event.get("notes", ""),
+            "item_type": "event",
+            "start_time": external_event["start"],
+            "end_time": external_event["end"]
+        }
+
+    def transform_from_mintie(self, mintie_event):
+        """Convert Mintie event to external format"""
+        return {
+            "title": mintie_event["title"],
+            "notes": mintie_event.get("description", ""),
+            "start": mintie_event["start_time"],
+            "end": mintie_event["end_time"]
+        }
+```
+
+## iCal Export
+
+Generate iCal format for calendar applications:
+
+```python
+from icalendar import Calendar, Event
+from datetime import datetime
+import requests
+
+def export_to_ical(filename="mintie_calendar.ics"):
+    """Export Mintie events to iCal format"""
+    response = requests.get("http://localhost:8000/api/events")
+    events = response.json()
+
+    cal = Calendar()
+    cal.add('prodid', '-//Mintie Calendar//EN')
+    cal.add('version', '2.0')
+
+    for event_data in events:
+        event = Event()
+        event.add('summary', event_data['title'])
+        event.add('description', event_data.get('description', ''))
+        event.add('dtstart', datetime.fromisoformat(event_data['start_time']))
+        event.add('dtend', datetime.fromisoformat(event_data['end_time']))
+        event.add('dtstamp', datetime.now())
+        event.add('uid', f"mintie-{event_data['id']}@mintie.app")
+
+        cal.add_component(event)
+
+    with open(filename, 'wb') as f:
+        f.write(cal.to_ical())
+
+    print(f"✅ Exported to {filename}")
+
+export_to_ical()
+```
+
+## Meeting Scheduler
+
+Build a meeting scheduling assistant:
+
+```python
+import requests
+from datetime import datetime, timedelta
+
+class MeetingScheduler:
+    def __init__(self, api_url):
+        self.api_url = api_url
+
+    def find_available_slots(self, duration_minutes, days_ahead=7):
+        """Find available time slots for meetings"""
+        response = requests.get(f"{self.api_url}/api/events")
+        events = response.json()
+
+        # Get events for next N days
+        start = datetime.now().replace(hour=9, minute=0, second=0)
+        end = start + timedelta(days=days_ahead)
+
+        # Working hours: 9 AM - 5 PM
+        available_slots = []
+
+        for day in range(days_ahead):
+            day_start = start + timedelta(days=day)
+
+            # Check each hour
+            for hour in range(9, 17):
+                slot_start = day_start.replace(hour=hour)
+                slot_end = slot_start + timedelta(minutes=duration_minutes)
+
+                # Check if slot conflicts with existing events
+                if not self.has_conflict(slot_start, slot_end, events):
+                    available_slots.append({
+                        "start": slot_start.isoformat(),
+                        "end": slot_end.isoformat()
+                    })
+
+        return available_slots
+
+    def has_conflict(self, slot_start, slot_end, events):
+        """Check if time slot conflicts with existing events"""
+        for event in events:
+            event_start = datetime.fromisoformat(event['start_time'])
+            event_end = datetime.fromisoformat(event['end_time'])
+
+            # Check for overlap
+            if (slot_start < event_end and slot_end > event_start):
+                return True
+
+        return False
+
+    def schedule_meeting(self, title, attendees, duration_minutes):
+        """Find and book next available slot"""
+        slots = self.find_available_slots(duration_minutes)
+
+        if not slots:
+            return None
+
+        # Book first available slot
+        slot = slots[0]
+        meeting_data = {
+            "title": f"{title} - {', '.join(attendees)}",
+            "item_type": "event",
+            "start_time": slot["start"],
+            "end_time": slot["end"]
+        }
+
+        response = requests.post(
+            f"{self.api_url}/api/events",
+            json=meeting_data
+        )
+
+        return response.json()
+
+# Usage
+scheduler = MeetingScheduler("http://localhost:8000")
+meeting = scheduler.schedule_meeting(
+    "Project Sync",
+    ["Alice", "Bob"],
+    duration_minutes=30
+)
+print(f"Meeting scheduled: {meeting['start_time']}")
+```
+
+## Recurring Events
+
+Create recurring event patterns:
+
+```python
+from datetime import datetime, timedelta
+
+def create_recurring_event(title, start_time, end_time, recurrence_days, occurrences):
+    """Create recurring events"""
+    for i in range(occurrences):
+        event_start = start_time + timedelta(days=i * recurrence_days)
+        event_end = end_time + timedelta(days=i * recurrence_days)
+
+        event_data = {
+            "title": f"{title} (Week {i+1})",
+            "item_type": "event",
+            "start_time": event_start.isoformat(),
+            "end_time": event_end.isoformat()
+        }
+
+        response = requests.post(
+            "http://localhost:8000/api/events",
+            json=event_data
+        )
+
+# Create 4 weekly standup meetings
+start = datetime(2025, 11, 18, 10, 0)
+end = datetime(2025, 11, 18, 10, 30)
+
+create_recurring_event(
+    "Weekly Standup",
+    start,
+    end,
+    recurrence_days=7,
+    occurrences=4
+)
+```
+
+## Calendar Views
+
+Build custom calendar visualizations:
+
+```python
+from datetime import datetime, timedelta
+import requests
+
+def generate_week_view():
+    """Generate a week view of events"""
+    start = datetime.now().replace(hour=0, minute=0, second=0)
+    end = start + timedelta(days=7)
+
+    response = requests.get(
+        f"http://localhost:8000/api/events",
+        params={
+            "start_date": start.isoformat(),
+            "end_date": end.isoformat()
+        }
+    )
+
+    events = response.json()
+
+    # Group by day
+    week_calendar = {i: [] for i in range(7)}
+
+    for event in events:
+        event_date = datetime.fromisoformat(event['start_time'])
+        day_offset = (event_date.date() - start.date()).days
+
+        if 0 <= day_offset < 7:
+            week_calendar[day_offset].append(event)
+
+    # Display
+    days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+    for day_num, day_name in enumerate(days):
+        print(f"\n{day_name} {(start + timedelta(days=day_num)).strftime('%m/%d')}")
+        print("=" * 40)
+
+        if week_calendar[day_num]:
+            for event in week_calendar[day_num]:
+                time = datetime.fromisoformat(event['start_time']).strftime('%H:%M')
+                print(f"  {time} - {event['title']}")
+        else:
+            print("  No events")
+
+generate_week_view()
+```
+
+## Related Resources
+
+<CardGroup cols={2}>
+  <Card title="Event Features" icon="calendar" href="/features/events">
+    Learn about calendar event features
+  </Card>
+  <Card title="Task Management" icon="list-check" href="/guides/task-management">
+    Combine tasks with calendar events
+  </Card>
+  <Card title="Webhooks" icon="webhook" href="/integration/webhooks">
+    Get notified of calendar changes
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference">
+    Complete API documentation
+  </Card>
+</CardGroup>

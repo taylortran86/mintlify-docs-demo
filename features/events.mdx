@@ -1,0 +1,475 @@
+---
+title: "Calendar Events"
+description: "Schedule and manage time-specific activities with Mintie Calendar"
+icon: "calendar"
+---
+
+## Overview
+
+Calendar events in Mintie Calendar help you schedule meetings, appointments, and time-specific activities. Unlike tasks, events have both start and end times, making them perfect for scheduled activities that occupy specific time slots.
+
+## Event Properties
+
+Every calendar event includes these properties:
+
+<ParamField path="id" type="integer" required>
+  Unique identifier automatically assigned when the event is created
+</ParamField>
+
+<ParamField path="title" type="string" required>
+  Event name or summary (1-200 characters)
+</ParamField>
+
+<ParamField path="description" type="string">
+  Optional detailed description of the event
+</ParamField>
+
+<ParamField path="start_time" type="datetime" required>
+  When the event begins (ISO 8601 format)
+</ParamField>
+
+<ParamField path="end_time" type="datetime" required>
+  When the event ends (ISO 8601 format)
+</ParamField>
+
+<ParamField path="created_at" type="datetime">
+  Timestamp when the event was created (automatically generated)
+</ParamField>
+
+<Note>
+  The `end_time` must be after the `start_time`. The API will validate this constraint.
+</Note>
+
+## Creating Events
+
+### Via Web Interface
+
+<Steps>
+  <Step title="Click 'Add Event'">
+    Navigate to the web application and click the "Add Event" button in the Events section.
+  </Step>
+
+  <Step title="Fill in Details">
+    - **Title** (required): Enter the event name
+    - **Description** (optional): Add meeting agenda or event details
+    - **Start Time** (required): Set when the event begins
+    - **End Time** (required): Set when the event ends
+  </Step>
+
+  <Step title="Validate and Save">
+    Ensure end time is after start time, then click "Add Event". The event appears immediately in your calendar.
+  </Step>
+</Steps>
+
+### Via API
+
+Create events programmatically:
+
+<CodeGroup>
+```bash cURL
+curl -X POST "http://localhost:8000/api/events" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Team Standup",
+    "description": "Daily sync meeting",
+    "item_type": "event",
+    "start_time": "2025-11-14T09:00:00",
+    "end_time": "2025-11-14T09:30:00"
+  }'
+```
+
+```python Python
+import requests
+from datetime import datetime, timedelta
+
+# Schedule an event for tomorrow
+start = datetime.now() + timedelta(days=1)
+start = start.replace(hour=14, minute=0, second=0)
+end = start + timedelta(hours=1)
+
+event = {
+    "title": "Client Presentation",
+    "description": "Q4 product roadmap review",
+    "item_type": "event",
+    "start_time": start.isoformat(),
+    "end_time": end.isoformat()
+}
+
+response = requests.post(
+    "http://localhost:8000/api/events",
+    json=event
+)
+
+print(response.json())
+```
+
+```javascript JavaScript
+// Schedule an event for next week
+const start = new Date();
+start.setDate(start.getDate() + 7);
+start.setHours(10, 0, 0, 0);
+
+const end = new Date(start);
+end.setHours(11, 0, 0, 0);
+
+const event = {
+  title: "Project Kickoff",
+  description: "Initialize new project with stakeholders",
+  item_type: "event",
+  start_time: start.toISOString(),
+  end_time: end.toISOString()
+};
+
+const response = await fetch("http://localhost:8000/api/events", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(event)
+});
+
+const data = await response.json();
+console.log(data);
+```
+</CodeGroup>
+
+<Accordion title="Response Example">
+```json
+{
+  "id": 15,
+  "title": "Team Standup",
+  "description": "Daily sync meeting",
+  "item_type": "event",
+  "completed": false,
+  "due_date": null,
+  "start_time": "2025-11-14T09:00:00",
+  "end_time": "2025-11-14T09:30:00",
+  "created_at": "2025-11-13T18:00:00"
+}
+```
+</Accordion>
+
+## Listing Events
+
+### View All Events
+
+Retrieve all calendar events:
+
+```bash
+curl http://localhost:8000/api/events
+```
+
+Events are automatically sorted by `start_time` in ascending order (earliest first).
+
+### Filter by Date Range
+
+Get events within a specific time period:
+
+<Tabs>
+  <Tab title="Today's Events">
+    ```bash
+    curl "http://localhost:8000/api/events?start_date=2025-11-14T00:00:00&end_date=2025-11-14T23:59:59"
+    ```
+  </Tab>
+
+  <Tab title="This Week">
+    ```bash
+    curl "http://localhost:8000/api/events?start_date=2025-11-11T00:00:00&end_date=2025-11-17T23:59:59"
+    ```
+  </Tab>
+
+  <Tab title="Next Month">
+    ```bash
+    curl "http://localhost:8000/api/events?start_date=2025-12-01T00:00:00&end_date=2025-12-31T23:59:59"
+    ```
+  </Tab>
+</Tabs>
+
+<Info>
+  Date range filtering compares against the event's `start_time`. Events that start within the specified range are returned.
+</Info>
+
+## Updating Events
+
+### Reschedule an Event
+
+Change the start and/or end times:
+
+<CodeGroup>
+```bash cURL
+curl -X PATCH "http://localhost:8000/api/events/15" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "start_time": "2025-11-14T10:00:00",
+    "end_time": "2025-11-14T10:30:00"
+  }'
+```
+
+```python Python
+import requests
+
+updates = {
+    "start_time": "2025-11-14T10:00:00",
+    "end_time": "2025-11-14T10:30:00"
+}
+
+response = requests.patch(
+    "http://localhost:8000/api/events/15",
+    json=updates
+)
+```
+
+```javascript JavaScript
+await fetch("http://localhost:8000/api/events/15", {
+  method: "PATCH",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    start_time: "2025-11-14T10:00:00",
+    end_time: "2025-11-14T10:30:00"
+  })
+});
+```
+</CodeGroup>
+
+### Update Title or Description
+
+Modify event details:
+
+```bash
+curl -X PATCH "http://localhost:8000/api/events/15" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "All-Hands Standup",
+    "description": "Company-wide sync meeting"
+  }'
+```
+
+### Extend Event Duration
+
+Make an event longer:
+
+```bash
+curl -X PATCH "http://localhost:8000/api/events/15" \
+  -H "Content-Type: application/json" \
+  -d '{"end_time": "2025-11-14T11:00:00"}'
+```
+
+## Deleting Events
+
+Remove canceled or obsolete events:
+
+```bash
+curl -X DELETE "http://localhost:8000/api/events/15"
+```
+
+<Warning>
+  Deletion is permanent. Consider updating the event with "[CANCELLED]" in the title if you need to maintain records.
+</Warning>
+
+## Time Zone Considerations
+
+<Info>
+  Mintie Calendar stores all times in UTC. When integrating with the API, ensure you convert local times to UTC or include timezone information in ISO 8601 format.
+</Info>
+
+### Working with Time Zones
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+
+    # Create event in local timezone
+    local_tz = ZoneInfo("America/New_York")
+    start = datetime(2025, 11, 14, 14, 0, tzinfo=local_tz)
+    end = datetime(2025, 11, 14, 15, 0, tzinfo=local_tz)
+
+    event = {
+        "title": "Regional Meeting",
+        "item_type": "event",
+        "start_time": start.isoformat(),  # Includes timezone
+        "end_time": end.isoformat()
+    }
+    ```
+  </Tab>
+
+  <Tab title="JavaScript">
+    ```javascript
+    // JavaScript Date objects use local timezone
+    const start = new Date("2025-11-14T14:00:00");
+    const end = new Date("2025-11-14T15:00:00");
+
+    const event = {
+      title: "Regional Meeting",
+      item_type: "event",
+      start_time: start.toISOString(),  // Converts to UTC
+      end_time: end.toISOString()
+    };
+    ```
+  </Tab>
+</Tabs>
+
+## Event Validation
+
+The API enforces these validation rules:
+
+<AccordionGroup>
+  <Accordion title="End time must be after start time">
+    ```json
+    {
+      "detail": "End time must be after start time"
+    }
+    ```
+
+    Ensure `end_time > start_time` when creating or updating events.
+  </Accordion>
+
+  <Accordion title="Title length limits">
+    Titles must be between 1 and 200 characters. Longer titles will be rejected:
+
+    ```json
+    {
+      "detail": "Title must be between 1 and 200 characters"
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Required fields">
+    `title`, `start_time`, and `end_time` are required when creating events:
+
+    ```json
+    {
+      "detail": [
+        {
+          "loc": ["body", "start_time"],
+          "msg": "field required",
+          "type": "value_error.missing"
+        }
+      ]
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Common Use Cases
+
+<Tabs>
+  <Tab title="Meetings">
+    ```bash
+    # One-on-one meeting
+    curl -X POST "http://localhost:8000/api/events" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "title": "1:1 with Manager",
+        "description": "Weekly sync and career development",
+        "item_type": "event",
+        "start_time": "2025-11-15T15:00:00",
+        "end_time": "2025-11-15T15:30:00"
+      }'
+    ```
+  </Tab>
+
+  <Tab title="All-Day Events">
+    ```bash
+    # Conference or holiday
+    curl -X POST "http://localhost:8000/api/events" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "title": "DevConf 2025",
+        "description": "Annual developer conference",
+        "item_type": "event",
+        "start_time": "2025-12-10T00:00:00",
+        "end_time": "2025-12-10T23:59:59"
+      }'
+    ```
+  </Tab>
+
+  <Tab title="Recurring Events">
+    ```bash
+    # Create multiple instances for weekly standup
+    for week in {0..3}; do
+      date=$(date -v +${week}w -v Mon "+%Y-%m-%dT09:00:00")
+      end_date=$(date -v +${week}w -v Mon "+%Y-%m-%dT09:30:00")
+
+      curl -X POST "http://localhost:8000/api/events" \
+        -H "Content-Type: application/json" \
+        -d "{
+          \"title\": \"Weekly Standup\",
+          \"item_type\": \"event\",
+          \"start_time\": \"$date\",
+          \"end_time\": \"$end_date\"
+        }"
+    done
+    ```
+  </Tab>
+
+  <Tab title="Reminders">
+    ```bash
+    # Set event 15 minutes before deadline
+    curl -X POST "http://localhost:8000/api/events" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "title": "Reminder: Submit report",
+        "item_type": "event",
+        "start_time": "2025-11-14T16:45:00",
+        "end_time": "2025-11-14T16:50:00"
+      }'
+    ```
+  </Tab>
+</Tabs>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Include Buffer Time">
+    Add 5-10 minutes between back-to-back events for transitions and breaks.
+  </Accordion>
+
+  <Accordion title="Use Descriptive Titles">
+    Include meeting type and key participants: "Weekly Planning - Engineering Team"
+  </Accordion>
+
+  <Accordion title="Add Relevant Details">
+    Include meeting links, locations, or agendas in the description field.
+  </Accordion>
+
+  <Accordion title="Set Realistic Durations">
+    Most meetings are 30 or 60 minutes. Avoid scheduling marathons without breaks.
+  </Accordion>
+
+  <Accordion title="Review Upcoming Events">
+    Regularly check events for the week ahead to stay prepared.
+  </Accordion>
+</AccordionGroup>
+
+## Related Features
+
+<CardGroup cols={2}>
+  <Card
+    title="Task Management"
+    icon="list-check"
+    href="/features/tasks"
+  >
+    Manage to-do items alongside your scheduled events
+  </Card>
+  <Card
+    title="Filtering"
+    icon="filter"
+    href="/features/filtering"
+  >
+    Learn how to filter events by date range
+  </Card>
+  <Card
+    title="Webhooks"
+    icon="webhook"
+    href="/integration/webhooks"
+  >
+    Receive notifications when events are created or updated
+  </Card>
+  <Card
+    title="API Reference"
+    icon="code"
+    href="/api-reference"
+  >
+    Explore all event-related API endpoints
+  </Card>
+</CardGroup>

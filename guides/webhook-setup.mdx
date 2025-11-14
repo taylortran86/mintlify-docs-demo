@@ -1,0 +1,502 @@
+---
+title: "Webhook Setup Guide"
+description: "Step-by-step guide to setting up and testing webhooks"
+icon: "webhook"
+---
+
+## Introduction
+
+This guide walks you through setting up webhooks to receive real-time notifications from Mintie Calendar, from local development to production deployment.
+
+## Prerequisites
+
+Before setting up webhooks, you'll need:
+
+- A publicly accessible HTTPS endpoint (use ngrok for local testing)
+- An API key with write permissions
+- A web server capable of handling POST requests
+
+## Local Development Setup
+
+### Step 1: Create a Webhook Handler
+
+<Tabs>
+  <Tab title="Python (Flask)">
+    ```python
+    from flask import Flask, request, jsonify
+    import json
+
+    app = Flask(__name__)
+
+    @app.route("/webhooks/mintie", methods=["POST"])
+    def handle_webhook():
+        # Parse webhook payload
+        payload = request.json
+
+        print("=" * 50)
+        print(f"Received {payload['event_type']} event")
+        print(f"Timestamp: {payload['timestamp']}")
+        print(f"Data: {json.dumps(payload['data'], indent=2)}")
+        print("=" * 50)
+
+        # Process the webhook
+        event_type = payload["event_type"]
+
+        if event_type == "task.created":
+            handle_task_created(payload["data"])
+        elif event_type == "task.completed":
+            handle_task_completed(payload["data"])
+        elif event_type == "event.created":
+            handle_event_created(payload["data"])
+
+        # Always return 200 OK
+        return jsonify({"status": "success"}), 200
+
+    def handle_task_created(task):
+        print(f"📝 New task: {task['title']}")
+
+    def handle_task_completed(task):
+        print(f"✅ Task completed: {task['title']}")
+
+    def handle_event_created(event):
+        print(f"📅 New event: {event['title']}")
+
+    if __name__ == "__main__":
+        app.run(host="0.0.0.0", port=5000, debug=True)
+    ```
+
+    Run the server:
+    ```bash
+    python webhook_handler.py
+    ```
+  </Tab>
+
+  <Tab title="Node.js (Express)">
+    ```javascript
+    const express = require('express');
+    const app = express();
+
+    app.use(express.json());
+
+    app.post('/webhooks/mintie', (req, res) => {
+      const { event_type, timestamp, data } = req.body;
+
+      console.log('='.repeat(50));
+      console.log(`Received ${event_type} event`);
+      console.log(`Timestamp: ${timestamp}`);
+      console.log(`Data: ${JSON.stringify(data, null, 2)}`);
+      console.log('='.repeat(50));
+
+      // Process the webhook
+      switch (event_type) {
+        case 'task.created':
+          console.log(`📝 New task: ${data.title}`);
+          break;
+        case 'task.completed':
+          console.log(`✅ Task completed: ${data.title}`);
+          break;
+        case 'event.created':
+          console.log(`📅 New event: ${data.title}`);
+          break;
+      }
+
+      // Always return 200 OK
+      res.status(200).json({ status: 'success' });
+    });
+
+    const PORT = 5000;
+    app.listen(PORT, () => {
+      console.log(`Webhook server listening on port ${PORT}`);
+    });
+    ```
+
+    Run the server:
+    ```bash
+    node webhook_handler.js
+    ```
+  </Tab>
+</Tabs>
+
+### Step 2: Expose Locally with ngrok
+
+<Steps>
+  <Step title="Install ngrok">
+    Download from [ngrok.com](https://ngrok.com/) and install
+  </Step>
+
+  <Step title="Start ngrok">
+    ```bash
+    ngrok http 5000
+    ```
+
+    You'll see output like:
+    ```
+    Forwarding  https://abc123def456.ngrok.io -> http://localhost:5000
+    ```
+  </Step>
+
+  <Step title="Copy the HTTPS URL">
+    Note the `https://` URL (e.g., `https://abc123def456.ngrok.io`)
+  </Step>
+</Steps>
+
+### Step 3: Create the Webhook
+
+```bash
+curl -X POST "http://localhost:8000/public/v1/webhooks" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://abc123def456.ngrok.io/webhooks/mintie",
+    "events": ["task.created", "task.completed", "event.created"],
+    "description": "Local development webhook"
+  }'
+```
+
+Save the webhook ID from the response.
+
+### Step 4: Test the Webhook
+
+Create a task to trigger the webhook:
+
+```bash
+curl -X POST "http://localhost:8000/api/tasks" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Test webhook integration",
+    "item_type": "task"
+  }'
+```
+
+You should see output in your webhook handler console!
+
+## Production Setup
+
+### Secure Webhook Endpoint
+
+Implement webhook signature verification:
+
+```python
+import hmac
+import hashlib
+from flask import Flask, request, abort
+
+app = Flask(__name__)
+WEBHOOK_SECRET = "your-webhook-secret"
+
+@app.route("/webhooks/mintie", methods=["POST"])
+def handle_webhook():
+    # Verify webhook signature (if implemented)
+    signature = request.headers.get("X-Mintie-Signature")
+
+    if not verify_signature(request.data, signature):
+        abort(401)
+
+    payload = request.json
+
+    # Process webhook...
+
+    return jsonify({"status": "success"}), 200
+
+def verify_signature(payload, signature):
+    """Verify webhook came from Mintie"""
+    if not signature:
+        return False
+
+    expected = hmac.new(
+        WEBHOOK_SECRET.encode(),
+        payload,
+        hashlib.sha256
+    ).hexdigest()
+
+    return hmac.compare_digest(expected, signature)
+```
+
+### Async Processing
+
+Queue webhooks for background processing:
+
+```python
+from celery import Celery
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+celery = Celery('tasks', broker='redis://localhost:6379')
+
+@app.route("/webhooks/mintie", methods=["POST"])
+def handle_webhook():
+    payload = request.json
+
+    # Queue for async processing
+    process_webhook.delay(payload)
+
+    # Return immediately
+    return jsonify({"status": "queued"}), 200
+
+@celery.task
+def process_webhook(payload):
+    """Process webhook in background"""
+    event_type = payload["event_type"]
+    data = payload["data"]
+
+    # Heavy processing here
+    if event_type == "task.created":
+        send_notifications(data)
+        update_analytics(data)
+        sync_external_system(data)
+
+def send_notifications(task):
+    # Send email, Slack, etc.
+    pass
+
+def update_analytics(task):
+    # Update metrics
+    pass
+
+def sync_external_system(task):
+    # Sync with other services
+    pass
+```
+
+### Deploy to Production
+
+<Tabs>
+  <Tab title="Heroku">
+    ```bash
+    # Create Heroku app
+    heroku create mintie-webhooks
+
+    # Set environment variables
+    heroku config:set MINTIE_API_KEY=your_key
+
+    # Deploy
+    git push heroku main
+
+    # Get URL
+    heroku info -s | grep web_url
+
+    # Create production webhook
+    curl -X POST "http://localhost:8000/public/v1/webhooks" \
+      -H "Authorization: Bearer YOUR_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "url": "https://mintie-webhooks.herokuapp.com/webhooks/mintie",
+        "events": ["task.created", "task.completed"],
+        "description": "Production webhook"
+      }'
+    ```
+  </Tab>
+
+  <Tab title="AWS Lambda">
+    ```python
+    import json
+
+    def lambda_handler(event, context):
+        """AWS Lambda webhook handler"""
+
+        # Parse webhook payload
+        payload = json.loads(event['body'])
+
+        print(f"Received {payload['event_type']} event")
+
+        # Process webhook
+        process_event(payload)
+
+        return {
+            'statusCode': 200,
+            'body': json.dumps({'status': 'success'})
+        }
+
+    def process_event(payload):
+        event_type = payload["event_type"]
+        data = payload["data"]
+
+        # Your processing logic
+        pass
+    ```
+
+    Deploy and get the API Gateway URL:
+    ```bash
+    aws lambda create-function --function-name mintie-webhook-handler
+    # Configure API Gateway
+    # Get endpoint URL
+    ```
+  </Tab>
+
+  <Tab title="Docker">
+    ```dockerfile
+    FROM python:3.11-slim
+
+    WORKDIR /app
+
+    COPY requirements.txt .
+    RUN pip install -r requirements.txt
+
+    COPY webhook_handler.py .
+
+    EXPOSE 5000
+
+    CMD ["python", "webhook_handler.py"]
+    ```
+
+    Build and deploy:
+    ```bash
+    docker build -t mintie-webhook .
+    docker run -p 5000:5000 -d mintie-webhook
+
+    # Deploy to production
+    docker push your-registry/mintie-webhook
+    ```
+  </Tab>
+</Tabs>
+
+## Advanced Patterns
+
+### Idempotency
+
+Handle duplicate webhook deliveries:
+
+```python
+import redis
+
+redis_client = redis.Redis(host='localhost', port=6379, db=0)
+
+@app.route("/webhooks/mintie", methods=["POST"])
+def handle_webhook():
+    payload = request.json
+
+    # Create unique event ID
+    event_id = f"{payload['event_type']}_{payload['timestamp']}_{payload['data']['id']}"
+
+    # Check if already processed
+    if redis_client.exists(event_id):
+        return jsonify({"status": "already_processed"}), 200
+
+    # Process webhook
+    process_webhook(payload)
+
+    # Mark as processed (expire after 24 hours)
+    redis_client.setex(event_id, 86400, "processed")
+
+    return jsonify({"status": "success"}), 200
+```
+
+### Retry Logic
+
+Handle transient failures:
+
+```python
+from tenacity import retry, stop_after_attempt, wait_exponential
+
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=2, max=10)
+)
+def process_webhook_with_retry(payload):
+    """Process webhook with automatic retries"""
+    # Your processing logic
+    result = external_api.call(payload)
+
+    if not result.success:
+        raise Exception("Processing failed, will retry")
+
+    return result
+```
+
+### Webhook Monitoring
+
+Track webhook health:
+
+```python
+from datetime import datetime
+
+webhook_metrics = {
+    "total_received": 0,
+    "total_processed": 0,
+    "total_failed": 0,
+    "last_received": None
+}
+
+@app.route("/webhooks/mintie", methods=["POST"])
+def handle_webhook():
+    webhook_metrics["total_received"] += 1
+    webhook_metrics["last_received"] = datetime.now()
+
+    try:
+        payload = request.json
+        process_webhook(payload)
+
+        webhook_metrics["total_processed"] += 1
+        return jsonify({"status": "success"}), 200
+
+    except Exception as e:
+        webhook_metrics["total_failed"] += 1
+        print(f"Error processing webhook: {e}")
+        return jsonify({"status": "error"}), 500
+
+@app.route("/health", methods=["GET"])
+def health_check():
+    """Health check endpoint with metrics"""
+    return jsonify({
+        "status": "healthy",
+        "metrics": webhook_metrics
+    })
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Webhook Not Receiving Events">
+    **Checklist**:
+    - Verify webhook URL is publicly accessible
+    - Confirm webhook is active (`is_active: true`)
+    - Check you're triggering the subscribed event types
+    - Review webhook server logs for errors
+    - Test with `curl` to ensure endpoint works
+  </Accordion>
+
+  <Accordion title="Timeout Errors">
+    **Solutions**:
+    - Return 200 OK immediately, process asynchronously
+    - Optimize webhook processing code
+    - Use background job queue (Celery, Bull, etc.)
+    - Increase server timeout settings
+  </Accordion>
+
+  <Accordion title="Duplicate Events">
+    **Solution**: Implement idempotency (see Advanced Patterns above)
+  </Accordion>
+
+  <Accordion title="Webhook Disabled">
+    If webhooks fail repeatedly, they may be auto-disabled:
+
+    ```bash
+    # Check webhook status
+    curl "http://localhost:8000/public/v1/webhooks/webhook_123" \
+      -H "Authorization: Bearer YOUR_API_KEY"
+
+    # Re-enable
+    curl -X PATCH "http://localhost:8000/public/v1/webhooks/webhook_123" \
+      -H "Authorization: Bearer YOUR_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{"is_active": true}'
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Related Resources
+
+<CardGroup cols={2}>
+  <Card title="Webhooks Documentation" icon="webhook" href="/integration/webhooks">
+    Complete webhook feature documentation
+  </Card>
+  <Card title="Authentication" icon="key" href="/integration/authentication">
+    Learn about API authentication
+  </Card>
+  <Card title="API Keys" icon="shield-halved" href="/integration/api-keys">
+    Manage your API keys
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference">
+    Complete API documentation
+  </Card>
+</CardGroup>

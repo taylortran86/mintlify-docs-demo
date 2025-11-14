@@ -1,0 +1,357 @@
+---
+title: "Task Management"
+description: "Create, organize, and track tasks with Mintie Calendar"
+icon: "list-check"
+---
+
+## Overview
+
+Tasks in Mintie Calendar help you organize your to-do items, set priorities with due dates, and track completion status. Whether you're managing personal tasks or team workflows, Mintie provides a simple yet powerful task management system.
+
+## Task Properties
+
+Every task in Mintie Calendar includes the following properties:
+
+<ParamField path="id" type="integer" required>
+  Unique identifier automatically assigned when the task is created
+</ParamField>
+
+<ParamField path="title" type="string" required>
+  Task name or summary (1-200 characters)
+</ParamField>
+
+<ParamField path="description" type="string">
+  Optional detailed description of the task
+</ParamField>
+
+<ParamField path="completed" type="boolean" default="false">
+  Completion status - `true` when task is done, `false` when pending
+</ParamField>
+
+<ParamField path="due_date" type="datetime">
+  Optional deadline for task completion (ISO 8601 format)
+</ParamField>
+
+<ParamField path="created_at" type="datetime">
+  Timestamp when the task was created (automatically generated)
+</ParamField>
+
+## Creating Tasks
+
+### Via Web Interface
+
+<Steps>
+  <Step title="Click 'Add Task'">
+    Navigate to the web application and click the "Add Task" button in the Tasks section.
+  </Step>
+
+  <Step title="Fill in Details">
+    - **Title** (required): Enter a clear, concise task name
+    - **Description** (optional): Add additional context or notes
+    - **Due Date** (optional): Set a deadline using the datetime picker
+  </Step>
+
+  <Step title="Save">
+    Click "Add Task" to create. The task appears immediately in your task list.
+  </Step>
+</Steps>
+
+### Via API
+
+Create tasks programmatically using the REST API:
+
+<CodeGroup>
+```bash cURL
+curl -X POST "http://localhost:8000/api/tasks" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Review pull request #42",
+    "description": "Check code quality and test coverage",
+    "item_type": "task",
+    "due_date": "2025-11-20T17:00:00"
+  }'
+```
+
+```python Python
+import requests
+
+task = {
+    "title": "Review pull request #42",
+    "description": "Check code quality and test coverage",
+    "item_type": "task",
+    "due_date": "2025-11-20T17:00:00"
+}
+
+response = requests.post(
+    "http://localhost:8000/api/tasks",
+    json=task
+)
+
+print(response.json())
+```
+
+```javascript JavaScript
+const task = {
+  title: "Review pull request #42",
+  description: "Check code quality and test coverage",
+  item_type: "task",
+  due_date: "2025-11-20T17:00:00"
+};
+
+const response = await fetch("http://localhost:8000/api/tasks", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(task)
+});
+
+const data = await response.json();
+console.log(data);
+```
+</CodeGroup>
+
+<Accordion title="Response Example">
+```json
+{
+  "id": 42,
+  "title": "Review pull request #42",
+  "description": "Check code quality and test coverage",
+  "item_type": "task",
+  "completed": false,
+  "due_date": "2025-11-20T17:00:00",
+  "start_time": null,
+  "end_time": null,
+  "created_at": "2025-11-14T10:30:00"
+}
+```
+</Accordion>
+
+## Listing Tasks
+
+### View All Tasks
+
+Retrieve all tasks in your system:
+
+```bash
+curl http://localhost:8000/api/tasks
+```
+
+### Filter by Completion Status
+
+<Tabs>
+  <Tab title="Active Tasks Only">
+    ```bash
+    curl "http://localhost:8000/api/tasks?completed=false"
+    ```
+
+    Returns only incomplete tasks.
+  </Tab>
+
+  <Tab title="Completed Tasks Only">
+    ```bash
+    curl "http://localhost:8000/api/tasks?completed=true"
+    ```
+
+    Returns only completed tasks.
+  </Tab>
+</Tabs>
+
+## Updating Tasks
+
+### Mark as Complete
+
+Update a task's completion status:
+
+<CodeGroup>
+```bash cURL
+curl -X PATCH "http://localhost:8000/api/tasks/42" \
+  -H "Content-Type: application/json" \
+  -d '{"completed": true}'
+```
+
+```python Python
+import requests
+
+response = requests.patch(
+    "http://localhost:8000/api/tasks/42",
+    json={"completed": True}
+)
+```
+
+```javascript JavaScript
+await fetch("http://localhost:8000/api/tasks/42", {
+  method: "PATCH",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ completed: true })
+});
+```
+</CodeGroup>
+
+### Update Title or Description
+
+Modify task details:
+
+```bash
+curl -X PATCH "http://localhost:8000/api/tasks/42" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Review and merge PR #42",
+    "description": "Approved - ready to merge"
+  }'
+```
+
+### Change Due Date
+
+Update or remove the due date:
+
+<Tabs>
+  <Tab title="Update Due Date">
+    ```bash
+    curl -X PATCH "http://localhost:8000/api/tasks/42" \
+      -H "Content-Type: application/json" \
+      -d '{"due_date": "2025-11-25T17:00:00"}'
+    ```
+  </Tab>
+
+  <Tab title="Remove Due Date">
+    ```bash
+    curl -X PATCH "http://localhost:8000/api/tasks/42" \
+      -H "Content-Type: application/json" \
+      -d '{"due_date": null}'
+    ```
+  </Tab>
+</Tabs>
+
+## Deleting Tasks
+
+Remove tasks that are no longer needed:
+
+```bash
+curl -X DELETE "http://localhost:8000/api/tasks/42"
+```
+
+<Warning>
+  Deletion is permanent and cannot be undone. Consider marking tasks as completed instead of deleting them to maintain history.
+</Warning>
+
+## Task Filtering in Web UI
+
+The web interface provides quick filters for task visibility:
+
+<CardGroup cols={3}>
+  <Card title="All Tasks" icon="list">
+    View every task regardless of status
+  </Card>
+  <Card title="Active" icon="circle">
+    Show only incomplete tasks
+  </Card>
+  <Card title="Completed" icon="circle-check">
+    Show only finished tasks
+  </Card>
+</CardGroup>
+
+Click any filter button to instantly update the task list without page refresh.
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Write Clear Task Titles">
+    - Use action verbs: "Review", "Update", "Fix", "Create"
+    - Be specific: "Fix login bug on Chrome" vs "Fix bug"
+    - Keep titles under 50 characters for readability
+  </Accordion>
+
+  <Accordion title="Set Realistic Due Dates">
+    - Add due dates for time-sensitive tasks
+    - Leave due date empty for ongoing or low-priority items
+    - Consider time zones when setting deadlines
+  </Accordion>
+
+  <Accordion title="Use Descriptions Effectively">
+    - Add context that won't fit in the title
+    - Include links to related resources
+    - List acceptance criteria or requirements
+  </Accordion>
+
+  <Accordion title="Regular Maintenance">
+    - Review and complete tasks regularly
+    - Archive or delete obsolete tasks
+    - Update priorities as needed
+  </Accordion>
+</AccordionGroup>
+
+## Common Use Cases
+
+<Tabs>
+  <Tab title="Personal To-Do List">
+    ```bash
+    # Morning routine
+    curl -X POST "http://localhost:8000/api/tasks" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "title": "Morning standup",
+        "item_type": "task",
+        "due_date": "2025-11-14T09:00:00"
+      }'
+    ```
+  </Tab>
+
+  <Tab title="Project Milestones">
+    ```bash
+    # Development milestone
+    curl -X POST "http://localhost:8000/api/tasks" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "title": "Complete API documentation",
+        "description": "All endpoints documented with examples",
+        "item_type": "task",
+        "due_date": "2025-11-30T23:59:59"
+      }'
+    ```
+  </Tab>
+
+  <Tab title="Team Assignments">
+    ```bash
+    # Team task
+    curl -X POST "http://localhost:8000/api/tasks" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "title": "Code review for @jane",
+        "description": "Review authentication PR",
+        "item_type": "task"
+      }'
+    ```
+  </Tab>
+</Tabs>
+
+## Related Features
+
+<CardGroup cols={2}>
+  <Card
+    title="Calendar Events"
+    icon="calendar"
+    href="/features/events"
+  >
+    Schedule time-specific activities alongside your tasks
+  </Card>
+  <Card
+    title="Filtering"
+    icon="filter"
+    href="/features/filtering"
+  >
+    Learn advanced filtering techniques for tasks and events
+  </Card>
+  <Card
+    title="Webhooks"
+    icon="webhook"
+    href="/integration/webhooks"
+  >
+    Get notified when tasks are created or completed
+  </Card>
+  <Card
+    title="API Reference"
+    icon="code"
+    href="/api-reference"
+  >
+    Explore all task-related API endpoints
+  </Card>
+</CardGroup>

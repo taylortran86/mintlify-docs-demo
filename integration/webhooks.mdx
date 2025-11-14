@@ -1,0 +1,403 @@
+---
+title: "Webhooks"
+description: "Receive real-time notifications for tasks, events, and other activities"
+icon: "webhook"
+---
+
+## Overview
+
+Webhooks allow your application to receive real-time HTTP notifications when specific events occur in Mintie Calendar. Instead of polling the API repeatedly, webhooks push updates to your server instantly.
+
+## How Webhooks Work
+
+<Steps>
+  <Step title="Subscribe">
+    Create a webhook subscription specifying your endpoint URL and event types
+  </Step>
+  <Step title="Event Occurs">
+    When a subscribed event happens (e.g., task created), Mintie Calendar prepares a notification
+  </Step>
+  <Step title="HTTP POST">
+    Mintie sends an HTTP POST request to your webhook URL with event data
+  </Step>
+  <Step title="Your Server Responds">
+    Your endpoint processes the webhook and responds with 200 OK
+  </Step>
+</Steps>
+
+## Supported Event Types
+
+<CardGroup cols={2}>
+  <Card title="task.created" icon="plus">
+    Triggered when a new task is created
+  </Card>
+  <Card title="task.completed" icon="check">
+    Triggered when a task is marked complete
+  </Card>
+  <Card title="task.updated" icon="pen">
+    Triggered when a task is modified
+  </Card>
+  <Card title="task.deleted" icon="trash">
+    Triggered when a task is deleted
+  </Card>
+  <Card title="event.created" icon="calendar-plus">
+    Triggered when a calendar event is created
+  </Card>
+  <Card title="event.updated" icon="calendar-pen">
+    Triggered when an event is modified
+  </Card>
+  <Card title="event.deleted" icon="calendar-xmark">
+    Triggered when an event is removed
+  </Card>
+</CardGroup>
+
+## Creating Webhooks
+
+<CodeGroup>
+```bash cURL
+curl -X POST "http://localhost:8000/public/v1/webhooks" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://api.example.com/webhooks/mintie",
+    "events": ["task.created", "task.completed"],
+    "description": "Production task notifications"
+  }'
+```
+
+```python Python
+import requests
+
+webhook_data = {
+    "url": "https://api.example.com/webhooks/mintie",
+    "events": ["task.created", "task.completed", "event.created"],
+    "description": "Production webhook",
+    "is_active": True
+}
+
+response = requests.post(
+    "http://localhost:8000/public/v1/webhooks",
+    headers={"Authorization": f"Bearer {YOUR_API_KEY}"},
+    json=webhook_data
+)
+
+webhook = response.json()
+print(f"Webhook created: {webhook['id']}")
+```
+
+```javascript JavaScript
+const webhookData = {
+  url: "https://api.example.com/webhooks/mintie",
+  events: ["task.created", "task.completed"],
+  description: "Production webhook"
+};
+
+const response = await fetch("http://localhost:8000/public/v1/webhooks", {
+  method: "POST",
+  headers: {
+    "Authorization": `Bearer ${YOUR_API_KEY}`,
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify(webhookData)
+});
+
+const webhook = await response.json();
+console.log(`Webhook created: ${webhook.id}`);
+```
+</CodeGroup>
+
+### Request Parameters
+
+<ParamField path="url" type="string" required>
+  Your HTTPS endpoint URL to receive webhook notifications
+</ParamField>
+
+<ParamField path="events" type="array" required>
+  List of event types to subscribe to
+</ParamField>
+
+<ParamField path="description" type="string">
+  Optional description (max 500 characters)
+</ParamField>
+
+<ParamField path="is_active" type="boolean" default="true">
+  Whether the webhook is active
+</ParamField>
+
+## Webhook Payload
+
+When an event occurs, Mintie Calendar sends a POST request to your webhook URL:
+
+### Example Payload
+
+```json
+{
+  "event_type": "task.created",
+  "timestamp": "2025-11-14T15:30:00Z",
+  "data": {
+    "id": 42,
+    "title": "Review pull request",
+    "description": "Check code quality",
+    "item_type": "task",
+    "completed": false,
+    "due_date": "2025-11-20T17:00:00",
+    "created_at": "2025-11-14T15:30:00"
+  }
+}
+```
+
+### Payload Fields
+
+<ResponseField name="event_type" type="string">
+  The type of event that triggered the webhook
+</ResponseField>
+
+<ResponseField name="timestamp" type="datetime">
+  When the event occurred (ISO 8601 UTC)
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  The resource data (task or event object)
+</ResponseField>
+
+## Handling Webhooks
+
+### Basic Webhook Handler
+
+<CodeGroup>
+```python Flask
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+@app.route("/webhooks/mintie", methods=["POST"])
+def handle_webhook():
+    payload = request.json
+
+    event_type = payload["event_type"]
+    data = payload["data"]
+
+    print(f"Received {event_type} event")
+
+    if event_type == "task.created":
+        # Handle new task
+        print(f"New task: {data['title']}")
+    elif event_type == "task.completed":
+        # Handle completed task
+        print(f"Task completed: {data['title']}")
+
+    return jsonify({"status": "success"}), 200
+
+if __name__ == "__main__":
+    app.run(port=5000)
+```
+
+```javascript Express
+const express = require('express');
+const app = express();
+
+app.use(express.json());
+
+app.post('/webhooks/mintie', (req, res) => {
+  const { event_type, data } = req.body;
+
+  console.log(`Received ${event_type} event`);
+
+  switch (event_type) {
+    case 'task.created':
+      console.log(`New task: ${data.title}`);
+      break;
+    case 'task.completed':
+      console.log(`Task completed: ${data.title}`);
+      break;
+  }
+
+  res.status(200).json({ status: 'success' });
+});
+
+app.listen(5000, () => {
+  console.log('Webhook handler listening on port 5000');
+});
+```
+</CodeGroup>
+
+### Response Requirements
+
+Your webhook endpoint must:
+
+1. **Respond quickly** (< 5 seconds)
+2. **Return 2xx status code** (200, 201, 204)
+3. **Handle idempotency** (same event may be sent multiple times)
+
+<Warning>
+  If your endpoint consistently fails or times out, the webhook may be automatically disabled.
+</Warning>
+
+## Managing Webhooks
+
+### List All Webhooks
+
+```bash
+curl "http://localhost:8000/public/v1/webhooks" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+### Get Webhook Details
+
+```bash
+curl "http://localhost:8000/public/v1/webhooks/webhook_123" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+### Update Webhook
+
+<CodeGroup>
+```bash cURL
+curl -X PATCH "http://localhost:8000/public/v1/webhooks/webhook_123" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "events": ["task.created", "task.updated", "task.completed"],
+    "is_active": true
+  }'
+```
+
+```python Python
+updates = {
+    "events": ["task.created", "task.completed", "event.created"],
+    "description": "Updated webhook configuration"
+}
+
+response = requests.patch(
+    "http://localhost:8000/public/v1/webhooks/webhook_123",
+    headers={"Authorization": f"Bearer {YOUR_API_KEY}"},
+    json=updates
+)
+```
+</CodeGroup>
+
+### Delete Webhook
+
+```bash
+curl -X DELETE "http://localhost:8000/public/v1/webhooks/webhook_123" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+## Testing Webhooks
+
+### Local Development with ngrok
+
+For testing webhooks locally:
+
+<Steps>
+  <Step title="Install ngrok">
+    Download from [ngrok.com](https://ngrok.com/)
+  </Step>
+
+  <Step title="Start Your Local Server">
+    ```bash
+    python webhook_handler.py
+    # Server running on http://localhost:5000
+    ```
+  </Step>
+
+  <Step title="Create ngrok Tunnel">
+    ```bash
+    ngrok http 5000
+    ```
+
+    You'll get a public URL like: `https://abc123.ngrok.io`
+  </Step>
+
+  <Step title="Create Webhook">
+    ```bash
+    curl -X POST "http://localhost:8000/public/v1/webhooks" \
+      -H "Authorization: Bearer YOUR_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "url": "https://abc123.ngrok.io/webhooks/mintie",
+        "events": ["task.created"]
+      }'
+    ```
+  </Step>
+
+  <Step title="Trigger an Event">
+    Create a task and watch your local server receive the webhook!
+  </Step>
+</Steps>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Use HTTPS">
+    Always use HTTPS URLs for production webhooks to ensure data security.
+  </Accordion>
+
+  <Accordion title="Implement Idempotency">
+    Store processed event IDs to avoid duplicate processing:
+
+    ```python
+    processed_events = set()
+
+    @app.route("/webhooks/mintie", methods=["POST"])
+    def handle_webhook():
+        payload = request.json
+        event_id = f"{payload['event_type']}_{payload['timestamp']}"
+
+        if event_id in processed_events:
+            return jsonify({"status": "already processed"}), 200
+
+        # Process event...
+        processed_events.add(event_id)
+        return jsonify({"status": "success"}), 200
+    ```
+  </Accordion>
+
+  <Accordion title="Process Asynchronously">
+    Queue webhooks for background processing:
+
+    ```python
+    from celery import Celery
+
+    celery = Celery('tasks', broker='redis://localhost:6379')
+
+    @app.route("/webhooks/mintie", methods=["POST"])
+    def handle_webhook():
+        payload = request.json
+        process_webhook.delay(payload)
+        return jsonify({"status": "queued"}), 200
+
+    @celery.task
+    def process_webhook(payload):
+        # Heavy processing here
+        pass
+    ```
+  </Accordion>
+
+  <Accordion title="Log All Webhooks">
+    Keep a record of received webhooks for debugging and audit trails.
+  </Accordion>
+
+  <Accordion title="Monitor Webhook Health">
+    Track webhook delivery success rates and response times.
+  </Accordion>
+</AccordionGroup>
+
+## Related Resources
+
+<CardGroup cols={2}>
+  <Card
+    title="Webhook Setup Guide"
+    icon="book"
+    href="/guides/webhook-setup"
+  >
+    Step-by-step tutorial for setting up webhooks
+  </Card>
+  <Card
+    title="API Reference"
+    icon="code"
+    href="/api-reference"
+  >
+    Complete webhook API documentation
+  </Card>
+</CardGroup>
