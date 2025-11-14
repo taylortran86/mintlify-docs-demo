@@ -178,17 +178,7 @@ For demos or short-term access, create keys with expiration dates (e.g., 24 hour
   <Accordion title="Lost API Key">
     **Problem**: API key was not saved after creation
 
-    **Solution**: You cannot retrieve the full key. Create a new one and revoke the lost key:
-
-    ```bash
-    # Create new key
-    curl -X POST "http://localhost:8000/public/v1/api-keys" \
-      -H "Content-Type: application/json" \
-      -d '{"name": "Replacement Key", "scopes": ["read", "write"]}'
-
-    # Revoke lost key (if you know the ID)
-    curl -X DELETE "http://localhost:8000/public/v1/api-keys/key_lost123"
-    ```
+    **Solution**: You cannot retrieve the full key. Create a new one with the same permissions and revoke the lost key if you know its ID.
   </Accordion>
 </AccordionGroup>
 
