@@ -18,42 +18,7 @@ You can create API keys through the API by providing a descriptive name, permiss
 
 ## Listing API Keys
 
-View all API keys for your account:
-
-```bash
-curl "http://localhost:8000/public/v1/api-keys" \
-  -H "Authorization: Bearer YOUR_API_KEY"
-```
-
-**Response:**
-
-```json
-{
-  "keys": [
-    {
-      "id": "key_abc123",
-      "name": "Production API Key",
-      "prefix": "sk_NrT8...I9n0qA",
-      "scopes": ["read", "write"],
-      "created_at": "2025-11-14T10:00:00",
-      "expires_at": "2026-12-31T23:59:59",
-      "last_used_at": "2025-11-14T15:30:00",
-      "is_active": true
-    },
-    {
-      "id": "key_def456",
-      "name": "Read-Only Analytics",
-      "prefix": "sk_AbC1...XyZ9",
-      "scopes": ["read"],
-      "created_at": "2025-10-01T09:00:00",
-      "expires_at": null,
-      "last_used_at": "2025-11-14T14:00:00",
-      "is_active": true
-    }
-  ],
-  "total": 2
-}
-```
+You can view all API keys for your account, including their names, prefixes, scopes, creation dates, expiration dates, and last usage timestamps. For security, the full API key is never returned after creation—only the prefix is shown.
 
 <Note>
   For security, the full API key is never returned after creation. Only the prefix is shown.
