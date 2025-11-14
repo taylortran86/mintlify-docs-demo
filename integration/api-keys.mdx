@@ -100,21 +100,7 @@ You can revoke API keys that are no longer needed or may be compromised. Revocat
   </Accordion>
 
   <Accordion title="Use Minimal Scopes">
-    Grant only the permissions needed:
-
-    ```python
-    # Analytics service only needs read access
-    analytics_key = {
-        "name": "Analytics Service",
-        "scopes": ["read"]
-    }
-
-    # Admin dashboard needs full access
-    admin_key = {
-        "name": "Admin Dashboard",
-        "scopes": ["read", "write", "admin"]
-    }
-    ```
+    Grant only the permissions needed. For example, analytics services should only have `read` access, while admin dashboards need full `read`, `write`, and `admin` scopes.
   </Accordion>
 
   <Accordion title="Monitor Key Usage">
