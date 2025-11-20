@@ -40,12 +40,13 @@ Choose the installation method that best suits your workflow.
     ```bash
     # macOS/Linux
     curl -sSL https://install.python-poetry.org | python3 -
-
+    
     # Windows (PowerShell)
     (Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | py -
     ```
 
     Verify installation:
+
     ```bash
     poetry --version
     ```
@@ -58,25 +59,23 @@ Choose the installation method that best suits your workflow.
         cd mintlify-project-demo
         ```
       </Step>
-
       <Step title="Install Dependencies">
         ```bash
         poetry install
         ```
 
         This command will:
+
         - Create a virtual environment automatically
         - Install all dependencies from `pyproject.toml`
         - Set up development tools (Black, Ruff, pytest)
       </Step>
-
       <Step title="Verify Installation">
         ```bash
         poetry run python -c "import fastapi; print('FastAPI version:', fastapi.__version__)"
         ```
       </Step>
     </Steps>
-
     ### Running Commands with Poetry
 
     Prefix all commands with `poetry run`:
@@ -84,13 +83,13 @@ Choose the installation method that best suits your workflow.
     ```bash
     # Start server
     poetry run uvicorn backend.main:app --reload
-
+    
     # Export OpenAPI schema
     poetry run export-schema
-
+    
     # Format code
     poetry run black backend/
-
+    
     # Run tests
     poetry run pytest
     ```
@@ -102,15 +101,14 @@ Choose the installation method that best suits your workflow.
     ```bash
     # Find environment path
     poetry env info --path
-
+    
     # Activate (macOS/Linux)
     source $(poetry env info --path)/bin/activate
-
+    
     # Activate (Windows)
     & "$(poetry env info --path)\Scripts\activate.ps1"
     ```
   </Tab>
-
   <Tab title="pip">
     ### Install with pip
 
@@ -122,13 +120,11 @@ Choose the installation method that best suits your workflow.
         cd mintlify-project-demo
         ```
       </Step>
-
       <Step title="Create Virtual Environment">
         ```bash
         python -m venv venv
         ```
       </Step>
-
       <Step title="Activate Virtual Environment">
         <Tabs>
           <Tab title="macOS/Linux">
@@ -147,23 +143,19 @@ Choose the installation method that best suits your workflow.
             ```
           </Tab>
         </Tabs>
-
         Your prompt should now show `(venv)` indicating the environment is active.
       </Step>
-
       <Step title="Install Dependencies">
         ```bash
         pip install -r requirements.txt
         ```
       </Step>
-
       <Step title="Verify Installation">
         ```bash
         python -c "import fastapi; print('FastAPI version:', fastapi.__version__)"
         ```
       </Step>
     </Steps>
-
     ### Running Commands with pip
 
     With the virtual environment activated:
@@ -171,10 +163,10 @@ Choose the installation method that best suits your workflow.
     ```bash
     # Start server
     python -m uvicorn backend.main:app --reload
-
+    
     # Export OpenAPI schema
     python export_openapi.py
-
+    
     # Run tests
     pytest
     ```
@@ -186,13 +178,16 @@ Choose the installation method that best suits your workflow.
 Once installed, start the FastAPI development server:
 
 <CodeGroup>
+
 ```bash Poetry
 poetry run uvicorn backend.main:app --reload
 ```
 
+
 ```bash pip
 python -m uvicorn backend.main:app --reload
 ```
+
 </CodeGroup>
 
 ### Server Output
@@ -211,6 +206,7 @@ INFO:     Application startup complete.
 ### What the `--reload` Flag Does
 
 The `--reload` flag enables auto-reload during development:
+
 - Watches for file changes in your project
 - Automatically restarts the server when you save changes
 - Essential for development, but disable in production
@@ -254,17 +250,17 @@ mintlify-project-demo/
 
 The database includes a single `items` table:
 
-| Column | Type | Description |
-|--------|------|-------------|
-| `id` | INTEGER | Primary key |
-| `title` | VARCHAR(200) | Task/event title |
-| `description` | TEXT | Optional description |
-| `item_type` | ENUM | Either "task" or "event" |
-| `completed` | BOOLEAN | Task completion status |
-| `due_date` | DATETIME | Optional task due date |
-| `start_time` | DATETIME | Event start time |
-| `end_time` | DATETIME | Event end time |
-| `created_at` | DATETIME | Timestamp of creation |
+| Column        | Type         | Description              |
+| ------------- | ------------ | ------------------------ |
+| `id`          | INTEGER      | Primary key              |
+| `title`       | VARCHAR(200) | Task/event title         |
+| `description` | TEXT         | Optional description     |
+| `item_type`   | ENUM         | Either "task" or "event" |
+| `completed`   | BOOLEAN      | Task completion status   |
+| `due_date`    | DATETIME     | Optional task due date   |
+| `start_time`  | DATETIME     | Event start time         |
+| `end_time`    | DATETIME     | Event end time           |
+| `created_at`  | DATETIME     | Timestamp of creation    |
 
 ### Resetting the Database
 
@@ -292,46 +288,46 @@ The application will recreate it on next startup.
     ```bash
     # macOS/Linux
     lsof -ti:8000 | xargs kill -9
-
+    
     # Windows
     netstat -ano | findstr :8000
     taskkill /PID <PID> /F
     ```
   </Accordion>
-
   <Accordion title="Module not found errors">
     If you see `ModuleNotFoundError`:
 
     **With Poetry:**
+
     ```bash
     poetry install --no-root
     poetry update
     ```
 
     **With pip:**
+
     ```bash
     pip install --upgrade pip
     pip install -r requirements.txt --force-reinstall
     ```
   </Accordion>
-
   <Accordion title="Poetry not found after installation">
     Add Poetry to your PATH:
 
     ```bash
     # macOS/Linux - add to ~/.zshrc or ~/.bashrc
     export PATH="$HOME/.local/bin:$PATH"
-
+    
     # Windows - add to environment variables
     %APPDATA%\Python\Scripts
     ```
 
     Restart your terminal and verify:
+
     ```bash
     poetry --version
     ```
   </Accordion>
-
   <Accordion title="Permission denied on macOS/Linux">
     You may need to make the activate script executable:
 
@@ -340,7 +336,6 @@ The application will recreate it on next startup.
     source venv/bin/activate
     ```
   </Accordion>
-
   <Accordion title="CORS errors in browser">
     CORS is already configured for `http://localhost:8000`. If accessing from a different origin, update `backend/main.py`:
 
@@ -354,7 +349,6 @@ The application will recreate it on next startup.
     )
     ```
   </Accordion>
-
   <Accordion title="Database locked error">
     SQLite databases can lock when accessed by multiple processes:
 
@@ -363,6 +357,7 @@ The application will recreate it on next startup.
     - Restart the server
 
     If the error persists:
+
     ```bash
     rm calendar_todo.db
     # Server will recreate on next start
@@ -401,42 +396,22 @@ poetry run pytest
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card
-    title="Quickstart Guide"
-    icon="rocket"
-    href="/quickstart"
-  >
+  <Card title="Quickstart Guide" icon="rocket" href="/quickstart">
     Create your first task and event in minutes.
   </Card>
-  <Card
-    title="Core Features"
-    icon="compass"
-    href="/features/tasks"
-  >
+  <Card title="Core Features" icon="compass" href="/features/tasks">
     Explore all features Mintie Calendar offers.
   </Card>
-  <Card
-    title="API Integration"
-    icon="plug"
-    href="/integration/authentication"
-  >
+  <Card title="API Integration" icon="plug" href="/integration/authentication">
     Start building integrations with the REST API.
   </Card>
-  <Card
-    title="API Reference"
-    icon="book"
-    href="/api-reference"
-  >
+  <Card title="API Reference" icon="book" href="/api-reference">
     Browse complete API documentation.
   </Card>
 </CardGroup>
 
 ## Need Help?
 
-<Card
-  title="Contact Support"
-  icon="life-ring"
-  href="mailto:support@mintie.app"
->
+<Card title="Contact Support" icon="life-ring" href="mailto:support@mintie.app">
   Can't resolve an installation issue? Reach out to our support team.
 </Card>
