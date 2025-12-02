@@ -783,6 +783,27 @@
         "title": "ApiKeyScope",
         "description": "Available scopes for API keys."
       },
+      "ApiKeyUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name",
+            "description": "New friendly name for the API key"
+          }
+        },
+        "type": "object",
+        "title": "ApiKeyUpdate",
+        "description": "Schema for updating an API key."
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
