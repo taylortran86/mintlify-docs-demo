@@ -166,6 +166,59 @@ Useful for checking:
 - Assigned scopes
 - Creation date
 
+## Updating API Keys
+
+Update an existing API key's properties using the PATCH endpoint:
+
+<CodeGroup>
+```bash cURL
+curl -X PATCH "http://localhost:8000/public/v1/api-keys/key_abc123" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Updated Key Name"}'
+```
+
+```python Python
+import requests
+
+response = requests.patch(
+    "http://localhost:8000/public/v1/api-keys/key_abc123",
+    headers={"Authorization": f"Bearer {YOUR_API_KEY}"},
+    json={"name": "Updated Key Name"}
+)
+
+updated_key = response.json()
+print(f"Updated key: {updated_key['name']}")
+```
+
+```javascript JavaScript
+const response = await fetch(
+  "http://localhost:8000/public/v1/api-keys/key_abc123",
+  {
+    method: "PATCH",
+    headers: {
+      "Authorization": `Bearer ${YOUR_API_KEY}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ name: "Updated Key Name" })
+  }
+);
+
+const updatedKey = await response.json();
+console.log(`Updated key: ${updatedKey.name}`);
+```
+</CodeGroup>
+
+### Update Parameters
+
+<ParamField path="name" type="string">
+  A new descriptive name for the API key (1-100 characters)
+</ParamField>
+
+<Note>
+  The actual key value and scopes cannot be changed after creation. To change scopes, create a new key and revoke the old one.
+</Note>
+
 ## Revoking API Keys
 
 Delete keys that are no longer needed or may be compromised:
