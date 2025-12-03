@@ -2,11 +2,8 @@
 title: "Welcome to Mintie Calendar"
 description: "A lightweight, intuitive calendar and task tracking application with a powerful API"
 ---
-<Badge color="green">Test</Badge>
 
-
-
-{user ? <Badge color="green">Customer</Badge> : <Badge color="red">Guest</Badge>}
+{user.name ? <Badge color="green">Customer</Badge> : <Badge color="red">Guest</Badge>}
 Welcome {user.name ? user.name : 'Guest'}!
 
 
