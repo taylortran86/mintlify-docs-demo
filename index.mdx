@@ -3,10 +3,7 @@ title: "Welcome to Mintie Calendar"
 description: "A lightweight, intuitive calendar and task tracking application with a powerful API"
 ---
 
-Welcome {user.name || 'Guest'}!
-
-
-{ user }
+Welcome {user.name ? user.name : 'Guest'}!
 
 
 ## What is the Mintie Calendar?
