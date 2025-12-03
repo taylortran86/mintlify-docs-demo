@@ -1,0 +1,5 @@
+# Ignore template files
+templates/
+
+# Ignore Claude files
+claude.md
