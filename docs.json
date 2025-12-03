@@ -55,6 +55,24 @@
       {
         "tab": "API Reference",
         "openapi": "openapi.json"
+      },
+      {
+        "tab": "Admin",
+        "pages": [
+          "admin/admin-overview"
+        ]
+      },
+      {
+        "tab": "Customer 1",
+        "pages": [
+          "customer-1/customer-1-overview"
+        ]
+      },
+      {
+        "tab": "Customer 2",
+        "pages": [
+          "customer-2/customer-2-overview"
+        ]
       }
     ],
     "global": {
