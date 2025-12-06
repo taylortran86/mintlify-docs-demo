@@ -6,7 +6,7 @@ icon: "chart-line"
 
 ## Overview
 
-Mintie Calendar's Analytics API provides insights into your usage patterns, helping you understand task completion rates, event scheduling trends, and API consumption.
+Mintie Calendar's Analytics API provides insights into your usage patterns, helping you understand task completion rates, event scheduling trends, and API consumption. You can also retrieve account information including your subscription plan and API quota.
 
 ## Get Analytics
 
@@ -113,11 +113,87 @@ curl "http://localhost:8000/public/v1/analytics/usage" \
   </Tab>
 </Tabs>
 
+## Account Information
+
+Retrieve your account details, subscription plan, and API quota:
+
+```bash
+curl "http://localhost:8000/v1/account" \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+### Response
+
+```json
+{
+  "account_id": "demo_account",
+  "email": "demo@example.com",
+  "plan": "Professional",
+  "created_at": "2025-08-15T10:00:00Z",
+  "api_quota": 100000,
+  "api_usage": 1523
+}
+```
+
+### Account Fields
+
+<ResponseField name="account_id" type="string">
+  Unique identifier for your account
+</ResponseField>
+
+<ResponseField name="email" type="string">
+  Account email address
+</ResponseField>
+
+<ResponseField name="plan" type="string">
+  Current subscription plan (Free, Professional, or Enterprise)
+</ResponseField>
+
+<ResponseField name="created_at" type="datetime">
+  When the account was created
+</ResponseField>
+
+<ResponseField name="api_quota" type="integer">
+  Monthly API call limit based on your plan
+</ResponseField>
+
+<ResponseField name="api_usage" type="integer">
+  API calls used in the current billing period
+</ResponseField>
+
+### Monitoring API Quota
+
+Use this endpoint to track your API usage and avoid hitting rate limits:
+
+```python
+import requests
+
+response = requests.get(
+    "http://localhost:8000/v1/account",
+    headers={"Authorization": f"Bearer {API_KEY}"}
+)
+
+account = response.json()
+usage_percent = (account["api_usage"] / account["api_quota"]) * 100
+
+print(f"API Usage: {account['api_usage']:,} / {account['api_quota']:,}")
+print(f"Usage: {usage_percent:.1f}%")
+
+if usage_percent > 80:
+    print("⚠️  Warning: Approaching API quota limit")
+```
+
 ## Related Resources
 
 <CardGroup cols={2}>
   <Card title="Task Management" icon="list-check" href="/features/tasks">
     Learn about task features
+  </Card>
+  <Card title="Authentication" icon="key" href="/integration/authentication">
+    API authentication guide
+  </Card>
+  <Card title="API Keys" icon="shield" href="/integration/api-keys">
+    Manage your API keys
   </Card>
   <Card title="API Reference" icon="code" href="/api-reference">
     Complete API documentation
