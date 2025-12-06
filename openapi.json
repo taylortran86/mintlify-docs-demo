@@ -119,6 +119,57 @@
           }
         }
       },
+      "patch": {
+        "tags": [
+          "API Keys"
+        ],
+        "summary": "Update Api Key",
+        "description": "Update an API key's properties.\n\nAllows you to modify certain properties of an existing API key, such as its name.\nNote that the actual key value and scopes cannot be changed after creation.\n\nArgs:\n    key_id: The unique identifier of the API key to update\n    key_update: The fields to update\n\nReturns:\n    ApiKeyResponse: The updated API key information\n\nRaises:\n    HTTPException: 404 if API key not found",
+        "operationId": "update_api_key_v1_api_keys__key_id__patch",
+        "parameters": [
+          {
+            "name": "key_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Key Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiKeyUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiKeyResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
       "delete": {
         "tags": [
           "API Keys"
@@ -731,6 +782,27 @@
         ],
         "title": "ApiKeyScope",
         "description": "Available scopes for API keys."
+      },
+      "ApiKeyUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name",
+            "description": "New friendly name for the API key"
+          }
+        },
+        "type": "object",
+        "title": "ApiKeyUpdate",
+        "description": "Schema for updating an API key."
       },
       "HTTPValidationError": {
         "properties": {
