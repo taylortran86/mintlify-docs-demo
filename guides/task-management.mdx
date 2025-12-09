@@ -99,6 +99,30 @@ for task_id in completed_today:
     )
 ```
 
+### Task Statistics
+
+Track your productivity with task statistics:
+
+```python
+# Get all tasks
+response = requests.get(f"{API_URL}/tasks")
+tasks = response.json()
+
+# Calculate statistics
+total_tasks = len(tasks)
+completed_tasks = len([t for t in tasks if t["completed"]])
+active_tasks = total_tasks - completed_tasks
+completion_rate = round((completed_tasks / total_tasks) * 100) if total_tasks > 0 else 0
+
+print(f"📊 Task Statistics:")
+print(f"   Total Tasks: {total_tasks}")
+print(f"   Active: {active_tasks}")
+print(f"   Completed: {completed_tasks}")
+print(f"   Completion Rate: {completion_rate}%")
+```
+
+The web interface automatically displays these statistics in a dashboard at the top of the page, updating in real-time as you create, complete, or delete tasks.
+
 ## Organizing Tasks
 
 ### By Priority

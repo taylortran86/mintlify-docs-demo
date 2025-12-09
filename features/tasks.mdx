@@ -233,6 +233,55 @@ curl -X DELETE "http://localhost:8000/api/tasks/42"
   Deletion is permanent and cannot be undone. Consider marking tasks as completed instead of deleting them to maintain history.
 </Warning>
 
+## Task Statistics Dashboard
+
+The web interface displays real-time statistics about your tasks, providing instant insights into your productivity:
+
+<CardGroup cols={4}>
+  <Card title="Total Tasks" icon="list">
+    Count of all tasks in the system
+  </Card>
+  <Card title="Active Tasks" icon="circle">
+    Number of incomplete tasks
+  </Card>
+  <Card title="Completed Tasks" icon="circle-check">
+    Number of finished tasks
+  </Card>
+  <Card title="Completion Rate" icon="chart-line">
+    Percentage of completed tasks
+  </Card>
+</CardGroup>
+
+### Statistics Features
+
+- **Real-time Updates**: Statistics automatically refresh when tasks are created, completed, or deleted
+- **Completion Rate**: Calculated as `(completed tasks / total tasks) × 100`
+- **Visual Dashboard**: Statistics displayed in an easy-to-read card layout at the top of the interface
+- **Zero State Handling**: Shows 0% completion rate when no tasks exist
+
+### Accessing Statistics via API
+
+While the statistics dashboard is a frontend feature, you can calculate similar metrics using the API:
+
+```python
+import requests
+
+# Get all tasks
+response = requests.get("http://localhost:8000/api/tasks")
+tasks = response.json()
+
+# Calculate statistics
+total_tasks = len(tasks)
+completed_tasks = len([t for t in tasks if t["completed"]])
+active_tasks = total_tasks - completed_tasks
+completion_rate = round((completed_tasks / total_tasks) * 100) if total_tasks > 0 else 0
+
+print(f"Total Tasks: {total_tasks}")
+print(f"Active Tasks: {active_tasks}")
+print(f"Completed Tasks: {completed_tasks}")
+print(f"Completion Rate: {completion_rate}%")
+```
+
 ## Task Filtering in Web UI
 
 The web interface provides quick filters for task visibility:
