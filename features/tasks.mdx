@@ -233,6 +233,27 @@ curl -X DELETE "http://localhost:8000/api/tasks/42"
   Deletion is permanent and cannot be undone. Consider marking tasks as completed instead of deleting them to maintain history.
 </Warning>
 
+## Task Statistics Dashboard
+
+The web interface displays real-time statistics about your tasks at the top of the page:
+
+<CardGroup cols={4}>
+  <Card title="Total Tasks" icon="list">
+    Shows the total number of tasks in your system
+  </Card>
+  <Card title="Active" icon="circle">
+    Displays the count of incomplete tasks
+  </Card>
+  <Card title="Completed" icon="circle-check">
+    Shows how many tasks you've finished
+  </Card>
+  <Card title="Completion Rate" icon="chart-line">
+    Percentage of completed tasks (highlighted card)
+  </Card>
+</CardGroup>
+
+The statistics update automatically whenever you create, complete, or delete tasks. The completion rate is calculated as `(completed tasks / total tasks) × 100%`.
+
 ## Task Filtering in Web UI
 
 The web interface provides quick filters for task visibility:

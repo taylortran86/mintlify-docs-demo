@@ -52,7 +52,7 @@ This guide walks you through common task management workflows using Mintie Calen
 
 ### Morning Routine
 
-Start your day by reviewing tasks:
+Start your day by reviewing tasks and checking your statistics:
 
 ```python
 import requests
@@ -74,6 +74,17 @@ today_tasks = [
 print(f"📋 Tasks due today: {len(today_tasks)}")
 for task in today_tasks:
     print(f"  - {task['title']}")
+
+# Calculate task statistics
+all_tasks = requests.get(f"{API_URL}/tasks").json()
+total = len(all_tasks)
+completed = len([t for t in all_tasks if t.get("completed")])
+active = total - completed
+completion_rate = (completed / total * 100) if total > 0 else 0
+
+print(f"\n📊 Task Statistics:")
+print(f"  Total: {total} | Active: {active} | Completed: {completed}")
+print(f"  Completion Rate: {completion_rate:.0f}%")
 ```
 
 ### End-of-Day Review
