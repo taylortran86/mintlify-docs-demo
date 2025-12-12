@@ -166,6 +166,53 @@ Useful for checking:
 - Assigned scopes
 - Creation date
 
+## Updating API Keys
+
+Modify properties of an existing API key:
+
+<CodeGroup>
+```bash cURL
+curl -X PATCH "http://localhost:8000/public/v1/api-keys/key_abc123" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Updated Production Key"}'
+```
+
+```python Python
+import requests
+
+response = requests.patch(
+    "http://localhost:8000/public/v1/api-keys/key_abc123",
+    headers={"Authorization": f"Bearer {YOUR_API_KEY}"},
+    json={"name": "Updated Production Key"}
+)
+
+updated_key = response.json()
+print(f"✅ API key updated: {updated_key['name']}")
+```
+
+```javascript JavaScript
+const response = await fetch(
+  "http://localhost:8000/public/v1/api-keys/key_abc123",
+  {
+    method: "PATCH",
+    headers: {
+      "Authorization": `Bearer ${YOUR_API_KEY}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ name: "Updated Production Key" })
+  }
+);
+
+const updatedKey = await response.json();
+console.log(`✅ API key updated: ${updatedKey.name}`);
+```
+</CodeGroup>
+
+<Note>
+  You can update the name of an API key, but the actual key value and scopes cannot be changed after creation.
+</Note>
+
 ## Revoking API Keys
 
 Delete keys that are no longer needed or may be compromised:
@@ -184,7 +231,7 @@ response = requests.delete(
     headers={"Authorization": f"Bearer {YOUR_API_KEY}"}
 )
 
-if response.status_code == 204:
+if response.status_code == 200:
     print("✅ API key revoked successfully")
 ```
 
@@ -197,7 +244,7 @@ const response = await fetch(
   }
 );
 
-if (response.status_code === 204) {
+if (response.ok) {
   console.log("✅ API key revoked successfully");
 }
 ```
