@@ -4,141 +4,47 @@ description: "Get started with Mintie Calendar in under 5 minutes"
 icon: "rocket"
 ---
 
-## Get Mintie Calendar Running
-
-Follow these steps to get Mintie Calendar up and running on your local machine.
+## Installation
 
 <Steps>
-  <Step title="Prerequisites">
-    Before you begin, ensure you have the following installed:
-
-    - **Python 3.8 or higher** - [Download Python](https://python.org/downloads)
-    - **Poetry** (recommended) - [Install Poetry](https://python-poetry.org/docs/#installation)
-
-    Alternatively, you can use `pip` instead of Poetry.
-  </Step>
-
-  <Step title="Clone or Download">
-    Navigate to the project directory:
-
+  <Step title="Install dependencies">
     ```bash
-    cd mintlify-project-demo
+    poetry install
     ```
   </Step>
 
-  <Step title="Install Dependencies">
-    Choose your preferred method:
-
-    <Tabs>
-      <Tab title="Poetry (Recommended)">
-        ```bash
-        poetry install
-        ```
-
-        Poetry will automatically create a virtual environment and install all dependencies.
-      </Tab>
-
-      <Tab title="pip">
-        ```bash
-        # Create virtual environment
-        python -m venv venv
-
-        # Activate virtual environment
-        # On macOS/Linux:
-        source venv/bin/activate
-        # On Windows:
-        venv\Scripts\activate
-
-        # Install dependencies
-        pip install -r requirements.txt
-        ```
-      </Tab>
-    </Tabs>
-  </Step>
-
-  <Step title="Start the Server">
-    Launch the FastAPI backend server:
-
-    <Tabs>
-      <Tab title="Poetry">
-        ```bash
-        poetry run uvicorn backend.main:app --reload
-        ```
-      </Tab>
-
-      <Tab title="pip">
-        ```bash
-        python -m uvicorn backend.main:app --reload
-        ```
-      </Tab>
-    </Tabs>
-
-    You should see output indicating the server is running:
-    ```
-    INFO:     Uvicorn running on http://127.0.0.1:8000
-    INFO:     Application startup complete.
+  <Step title="Start the server">
+    ```bash
+    poetry run uvicorn backend.main:app --reload
     ```
   </Step>
 
-  <Step title="Access the Application">
-    Open your browser and navigate to:
-
-    - **Web Application**: [http://localhost:8000/static/index.html](http://localhost:8000/static/index.html)
-    - **API Documentation**: [http://localhost:8000/public/docs](http://localhost:8000/public/docs)
-    - **Internal API Docs**: [http://localhost:8000/internal/docs](http://localhost:8000/internal/docs)
+  <Step title="Open the application">
+    Navigate to [http://localhost:8000/static/index.html](http://localhost:8000/static/index.html)
   </Step>
 </Steps>
 
-## Your First Task
-
-Let's create your first task using the web interface.
+## Create your first task
 
 <Steps>
-  <Step title="Open the Application">
-    Navigate to [http://localhost:8000/static/index.html](http://localhost:8000/static/index.html)
-  </Step>
-
   <Step title="Click 'Add Task'">
     Click the "Add Task" button in the Tasks section.
   </Step>
 
-  <Step title="Fill in Task Details">
+  <Step title="Fill in details">
     - **Title**: "Learn Mintie Calendar"
-    - **Description**: "Explore all features of Mintie Calendar"
-    - **Due Date**: Select tomorrow's date (optional)
+    - **Description**: "Explore all features"
+    - **Due Date**: Select tomorrow's date
   </Step>
 
-  <Step title="Save the Task">
-    Click "Add Task" to save. Your task will appear in the task list immediately!
-  </Step>
-</Steps>
-
-## Your First Event
-
-Now let's schedule a calendar event.
-
-<Steps>
-  <Step title="Click 'Add Event'">
-    Click the "Add Event" button in the Events section.
-  </Step>
-
-  <Step title="Fill in Event Details">
-    - **Title**: "Team Standup"
-    - **Description**: "Daily team sync meeting"
-    - **Start Time**: Today at 10:00 AM
-    - **End Time**: Today at 10:30 AM
-  </Step>
-
-  <Step title="Save the Event">
-    Click "Add Event" to save. The event will appear in your calendar list!
+  <Step title="Save">
+    Click "Add Task" to save.
   </Step>
 </Steps>
 
-## Making Your First API Call
+## Use the API
 
-Let's interact with the API directly using cURL.
-
-### Create a Task via API
+Create a task via API:
 
 ```bash
 curl -X POST "http://localhost:8000/api/tasks" \
@@ -151,41 +57,7 @@ curl -X POST "http://localhost:8000/api/tasks" \
   }'
 ```
 
-<Accordion title="View Response">
-```json
-{
-  "id": 1,
-  "title": "Complete API integration",
-  "description": "Set up API keys and webhooks",
-  "item_type": "task",
-  "completed": false,
-  "due_date": "2025-12-01T17:00:00",
-  "created_at": "2025-11-14T10:00:00"
-}
-```
-</Accordion>
-
-### List All Tasks
-
-```bash
-curl http://localhost:8000/api/tasks
-```
-
-### Create a Calendar Event via API
-
-```bash
-curl -X POST "http://localhost:8000/api/events" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Product Launch",
-    "description": "Launch new feature to customers",
-    "item_type": "event",
-    "start_time": "2025-12-15T14:00:00",
-    "end_time": "2025-12-15T15:00:00"
-  }'
-```
-
-## Next Steps
+## Next steps
 
 <CardGroup cols={2}>
   <Card
@@ -217,13 +89,3 @@ curl -X POST "http://localhost:8000/api/events" \
     Explore the complete API documentation.
   </Card>
 </CardGroup>
-
-## Need Help?
-
-<Card
-  title="Installation Guide"
-  icon="book-open"
-  href="/installation"
->
-  For detailed installation instructions and troubleshooting, check out our comprehensive installation guide.
-</Card>
